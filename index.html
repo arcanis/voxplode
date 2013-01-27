@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+
+    <head>
+        <link rel="stylesheet" type="text/css" href="styles/app.css" />
+
+        <script src="vendors/JQuery.js"></script>
+        <script>$( document ).ready( function ( ) { $( 'body' ).addClass( 'ok' ); } );</script>
+
+        <script src="vendors/Three.js"></script>
+
+        <script src="vendors/Physi.js"></script>
+        <script>var PHYSI = Physijs; // Consistency</script>
+        <script>PHYSI.scripts.worker = "vendors/Physi.ext/Worker.js";</script>
+        <script>PHYSI.scripts.ammo = "../Ammo.js";</script>
+
+        <script src="vendors/Game.js"></script>
+        <script src="vendors/Perlin.js"></script>
+        <script src="vendors/Voxel.js"></script>
+
+        <script src="scripts/hardLoader.js"></script>
+
+        <script src="scripts/states/Game.js"></script>
+
+        <script src="scripts/app.js"></script>
+    </head>
+
+    <body>
+        <div id="app">
+
+            <div id="hard-loading">
+                <div class="progressbar">
+                    <div class="cursor">
+                    </div>
+                </div>
+            </div>
+
+            <canvas id="screen">
+            </canvas>
+
+        </div>
+    </body>
+
+</html>
