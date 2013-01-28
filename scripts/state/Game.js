@@ -31,8 +31,8 @@ State.Game.prototype.construct = function ( ) {
             data.top.scene.add( data.light );
 
             data.top.camera = new THREE.PerspectiveCamera( 60, 1, .001, 10000 );
-            data.top.camera.position = data.player.position;
-            data.top.scene.add( data.top.camera );
+            data.top.camera.rotation.y = Math.PI;
+            data.player.object3D.add( data.top.camera );
         } )
 
         // Three.js textures
