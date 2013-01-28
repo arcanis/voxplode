@@ -1,4 +1,4 @@
-var hardLoader = new GAME.Loading.Loader( )
+var hardLoader = new GAME.Loader( )
 
     .begin( function ( ) {
         $( document ).ready( function ( ) {

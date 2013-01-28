@@ -1,4 +1,4 @@
-var Application = new GAME.State.Machine( );
+var Application = new GAME.StateMachine( );
 
 hardLoader
 
@@ -8,7 +8,7 @@ hardLoader
     // Standard Three.js objects
     .push( 'direct', function ( data ) {
         data.renderer = new THREE.WebGLRenderer( { canvas : $( '#screen' )[ 0 ], antialias : true } );
-        data.scene = new PHYSI.Scene( );
+        data.scene = new THREE.Scene( );
     } )
 
     // Event handler waiting for screen resize
@@ -37,13 +37,13 @@ hardLoader
         data.update = new GAME.Loop( GAME.Loop.fps( 60 ),
             function ( delta ) {
                 if ( ! Application.state ) return ;
-                Application.update( );
+                Application.update( delta );
             }
         );
     } )
 
 .start( function ( data ) {
 
-    Application.setState( new States.Game( data ) );
+    Application.setState( new State.Game( data ) );
 
 } );
