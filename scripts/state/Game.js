@@ -87,12 +87,18 @@ State.Game.prototype.update = function ( delta ) {
     if ( GAME.keyboard.pressed( GAME.Key.Up ) )   zKeysVelocity += 10;
     if ( GAME.keyboard.pressed( GAME.Key.Down ) ) zKeysVelocity -= 10;
 
+    var xKeysVelocity = 0;
+    if ( GAME.keyboard.pressed( GAME.Key.Left ) )  xKeysVelocity += 10;
+    if ( GAME.keyboard.pressed( GAME.Key.Right ) ) xKeysVelocity -= 10;
+
     if ( GAME.keyboard.pressed( GAME.Key.Space, true ) )
         this.scope.player.velocity.y += 4 * 8;
 
+    this.scope.player.velocity.x += xKeysVelocity;
     this.scope.player.velocity.z += zKeysVelocity;
     var frameVelocity = this.scope.player.velocity.clone( ).multiplyScalar( delta );
     this.scope.player.velocity.z -= zKeysVelocity;
+    this.scope.player.velocity.x -= xKeysVelocity;
 
     this.collide( this.scope.player, frameVelocity, function ( xCollision, yCollision, zCollision ) {
 
