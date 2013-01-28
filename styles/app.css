@@ -1,3 +1,5 @@
+@import url("fonts.css");
+
 body #app { display: none; }
 body.ok #app { display: block; }
 
@@ -50,4 +52,17 @@ body #screen {
     left: 0; top: 0;
 
     z-index: 1;
+}
+
+#fps {
+    position: absolute;
+    left: 0; top: 0;
+
+    z-index: 3;
+
+    padding: 5px;
+
+    background: rgba(255, 255, 255, .8);
+
+    font-family: Minecraftia;
 }

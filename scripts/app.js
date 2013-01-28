@@ -27,19 +27,21 @@ hardLoader
                 if ( ! data.camera ) return ;
                 data.camera.aspect = data.screenWidth / data.screenHeight;
                 data.camera.updateProjectionMatrix( );
-                data.renderer.render( data.scene, data.camera );
-            }
-        );
+                data.renderer.render( data.scene, data.camera ); } );
+        data.repaint.fps( function ( n ) {
+            $( '#rendering-fps .cursor' ).text( n );
+        } );
     } )
 
     // Main update loop
     .push( 'direct', function ( data ) {
-        data.update = new GAME.Loop( GAME.Loop.fps( 60 ),
+        data.update = new GAME.Loop( GAME.Loop.frames( 60 ),
             function ( delta ) {
                 if ( ! Application.state ) return ;
-                Application.update( delta );
-            }
-        );
+                Application.update( delta ); } );
+        data.update.fps( function ( n ) {
+            $( '#update-fps .cursor' ).text( n );
+        } );
     } )
 
 .start( function ( data ) {
