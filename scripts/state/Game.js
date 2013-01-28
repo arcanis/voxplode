@@ -21,12 +21,6 @@ State.Game.prototype.construct = function ( ) {
 
         // Initializes THREE objects
         .push( 'direct', function ( data ) {
-            data.top.camera = new THREE.PerspectiveCamera( 60, 1, .001, 10000 );
-            data.top.camera.position.set( 100, 100, 100 );
-            data.top.camera.updateMatrix( );
-            data.top.camera.lookAt( new THREE.Vector3( 0, 0, 0 ) );
-            data.top.scene.add( data.top.camera );
-
             data.player = new Component.Player( 0xff0000 );
             data.player.position.set( 0, 50, 0 );
             data.player.acceleration.y = -9.81 * 8;
@@ -35,6 +29,10 @@ State.Game.prototype.construct = function ( ) {
             data.light = new THREE.PointLight( 0xffffff );
             data.light.position = data.player.position;
             data.top.scene.add( data.light );
+
+            data.top.camera = new THREE.PerspectiveCamera( 60, 1, .001, 10000 );
+            data.top.camera.position = data.player.position;
+            data.top.scene.add( data.top.camera );
         } )
 
         // Three.js textures
