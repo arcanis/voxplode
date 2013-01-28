@@ -45,7 +45,7 @@ State.Game.prototype.construct = function ( ) {
         .push( 'direct', function ( data ) {
             data.top.scene.add( ( data.voxelManager = new VOXEL.Manager.Three( [
                 new THREE.MeshLambertMaterial( { map : data[ 'block:grass' ] } ),
-                new THREE.MeshLambertMaterial( { map : data[ 'block:dirt' ] } )
+                new THREE.MeshLambertMaterial( { color : 0x92b5d1, opacity : 0.4, transparent : true } )
             ] ) ).object3D );
         } )
 
@@ -55,9 +55,11 @@ State.Game.prototype.construct = function ( ) {
             data.voxelEngine = new VOXEL.Engine( data.voxelManager );
 
             new PERLIN.Generator( ).generate( [ - 100, - 100 ], [ 201, 201 ], function ( coords, value ) {
-                for ( var y = 0, Y = Math.floor( value * 30 ); y < Y; ++ y ) {
-                    data.voxelEngine.set( coords[ 0 ], y, coords[ 1 ], 0 );
-                }
+                var Y = Math.floor( value * 30 );
+                for ( var y1 = 0; y1 < Y; ++ y1 )
+                    data.voxelEngine.set( coords[ 0 ], y1, coords[ 1 ], ( 0 << 24 ) | 0 );
+                for ( var y2 = Y; y2 < 19; ++ y2 )
+                    data.voxelEngine.set( coords[ 0 ], y2, coords[ 1 ], ( 1 << 24 ) | 1 );
             } );
 
             data.voxelEngine.commit( function ( infos ) {
