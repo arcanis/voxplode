@@ -23,7 +23,7 @@ State.Game.prototype.construct = function ( ) {
         .push( 'direct', function ( data ) {
             data.player = new Component.Player( 0xff0000 );
             data.player.position.set( 0, 50, 0 );
-            data.player.acceleration.y = -9.81 * 1;
+            data.player.acceleration.y = -9.81 * 4;
             data.top.scene.add( data.player.object3D );
 
             data.light = new THREE.PointLight( 0xffffff );
@@ -75,7 +75,7 @@ State.Game.prototype.construct = function ( ) {
             var operations = [ ];
             for ( var x = 0; x < width; ++ x ) {
                 for ( var z = 0; z < depth; ++ z ) {
-					var Y = Math.floor( perlin.get( x, z ) * 30 * 2 );
+					var Y = Math.floor( perlin.get( x, z ) * 20 );
                     for ( var y1 = 0; y1 < Y; ++ y1 ) {
                         data.voxelEngine.setVoxel( [ ox + x, oy + y1, oz + z ], VOXEL.L0 | 0 );
                     } for ( var y2 = Y; y2 < height / 2; ++ y2 ) {
@@ -115,7 +115,7 @@ State.Game.prototype.update = function ( delta ) {
     if ( GAME.keyboard.pressed( GAME.Key.Right ) ) xKeysVelocity -= 10;
 
     if ( GAME.keyboard.pressed( GAME.Key.Space, true ) )
-        this.scope.player.velocity.y += 4 * 8;
+        this.scope.player.velocity.y += 8 * 2;
 
     this.scope.player.velocity.x += xKeysVelocity;
     this.scope.player.velocity.z += zKeysVelocity;
@@ -123,7 +123,7 @@ State.Game.prototype.update = function ( delta ) {
     this.scope.player.velocity.z -= zKeysVelocity;
     this.scope.player.velocity.x -= xKeysVelocity;
 
-    this.collide( this.scope.player, frameVelocity, function ( xCollision, yCollision, zCollision ) {
+    this.collide( this.scope.player, frameVelocity, function ( err, xCollision, yCollision, zCollision ) {
 
         if ( xCollision ) this.scope.player.velocity.x = frameVelocity.x = 0;
         if ( yCollision ) this.scope.player.velocity.y = frameVelocity.y = 0;
@@ -158,7 +158,8 @@ State.Game.prototype.collide = function ( component, velocity, callback ) {
         for ( var x = from.x, X = from.x + size.x; x < X; ++ x ) {
             for ( var y = from.y, Y = from.y + size.y; y < Y; ++ y ) {
                 for ( var z = from.z, Z = from.z + size.z; z < Z; ++ z ) {
-                    if ( this.scope.voxelEngine.getVoxel( [ x, y, z ] ) !== VOXEL.NOP ) {
+					var value = this.scope.voxelEngine.getVoxel( [ x, y, z ] );
+                    if ( value !== VOXEL.NOP && value !== undefined ) {
                         return true;
                     }
                 }
