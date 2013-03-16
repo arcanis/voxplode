@@ -23,7 +23,7 @@ State.Game.prototype.construct = function ( ) {
         .push( 'direct', function ( data ) {
             data.player = new Component.Player( 0xff0000 );
             data.player.position.set( 0, 50, 0 );
-            data.player.acceleration.y = -9.81 * 8;
+            data.player.acceleration.y = -9.81 * 1;
             data.top.scene.add( data.player.object3D );
 
             data.light = new THREE.PointLight( 0xffffff );
@@ -41,7 +41,8 @@ State.Game.prototype.construct = function ( ) {
 
         // Creates voxel manager
         .push( 'direct', function ( data ) {
-            data.top.scene.add( ( data.voxelManager = new VOXEL.Manager.Three( [
+            data.voxelEngine = new VOXEL.Engine( );
+            data.top.scene.add( ( data.voxelManager = new VOXEL.ThreeManager( data.voxelEngine, [
                 new THREE.MeshLambertMaterial( { map : data[ 'block:grass' ] } ),
                 new THREE.MeshLambertMaterial( { color : 0x92b5d1, opacity : 0.4, transparent : true } )
             ] ) ).object3D );
@@ -50,20 +51,42 @@ State.Game.prototype.construct = function ( ) {
         // Creates world
         .push( 'deferred', function ( data, callback ) {
 
-            data.voxelEngine = new VOXEL.Engine( data.voxelManager );
+            var width = 100;
+            var depth = 100;
+            var height = 30;
 
-            new PERLIN.Generator( ).generate( [ - 100, - 100 ], [ 201, 201 ], function ( coords, value ) {
-                var Y = Math.floor( value * 30 );
-                for ( var y1 = 0; y1 < Y; ++ y1 )
-                    data.voxelEngine.set( coords[ 0 ], y1, coords[ 1 ], ( 0 << 24 ) | 0 );
-                for ( var y2 = Y; y2 < 19; ++ y2 )
-                    data.voxelEngine.set( coords[ 0 ], y2, coords[ 1 ], ( 1 << 24 ) | 1 );
+			var ox = 0;
+			var oy = 0;
+			var oz = 0;
+
+            var startRegionKey = VOXEL.getMainRegionKeyFromWorldVoxel( [ ox, oy, oz ] );
+            var endRegionKey = VOXEL.getMainRegionKeyFromWorldVoxel( [ ox + width, oy + height, oz + depth ] );
+
+            for ( var regionKey = startRegionKey.slice( ); regionKey[ 0 ] <= endRegionKey[ 0 ]; ++ regionKey[ 0 ] ) {
+                for ( regionKey[ 1 ] = startRegionKey[ 1 ]; regionKey[ 1 ] <= endRegionKey[ 1 ]; ++ regionKey[ 1 ] ) {
+                    for ( regionKey[ 2 ] = startRegionKey[ 2 ]; regionKey[ 2 ] <= endRegionKey[ 2 ]; ++ regionKey[ 2 ] ) {
+                        data.voxelEngine.setRegion( regionKey, new VOXEL.Region( ) );
+                    }
+                }
+            }
+
+            var perlin = new PERLIN.WebGLGenerator( width + 1, depth + 1 ).generate( );
+
+            var operations = [ ];
+            for ( var x = 0; x < width; ++ x ) {
+                for ( var z = 0; z < depth; ++ z ) {
+					var Y = Math.floor( perlin.get( x, z ) * 30 * 2 );
+                    for ( var y1 = 0; y1 < Y; ++ y1 ) {
+                        data.voxelEngine.setVoxel( [ ox + x, oy + y1, oz + z ], VOXEL.L0 | 0 );
+                    } for ( var y2 = Y; y2 < height / 2; ++ y2 ) {
+                        data.voxelEngine.setVoxel( [ ox + x, oy + y2, oz + z ], VOXEL.L1 | 1 );
+                    }
+                }
+            }
+
+            data.voxelEngine.polygonize( function ( err, total, progress ) {
+                callback( progress / total );
             } );
-
-            data.voxelEngine.commit( function ( infos ) {
-                callback( infos.progress.success / infos.progress.total );
-            } );
-
         }, 100 )
 
     .start( function ( data ) {
@@ -115,11 +138,10 @@ State.Game.prototype.update = function ( delta ) {
 
 State.Game.prototype.collide = function ( component, velocity, callback ) {
 
-    var check = function ( dAxis, uAxis, vAxis, callback ) {
+    var check = function ( dAxis, uAxis, vAxis ) {
 
         if ( ! velocity[ dAxis ] ) {
-            callback( false );
-            return ; }
+            return false; }
 
         var direction = velocity[ dAxis ] ? velocity[ dAxis ] > 0 ? 1 : - 1 : 0;
 
@@ -133,17 +155,20 @@ State.Game.prototype.collide = function ( component, velocity, callback ) {
         size[ vAxis ] = Math.ceil( component.position[ vAxis ] + component.size[ vAxis ] / 2 ) - from[ vAxis ];
         size[ dAxis ] = 1;
 
-        this.scope.voxelEngine.test(
-            [ from.x, from.y, from.z ],
-            [ size.x, size.y, size.z ],
-            callback );
+        for ( var x = from.x, X = from.x + size.x; x < X; ++ x ) {
+            for ( var y = from.y, Y = from.y + size.y; y < Y; ++ y ) {
+                for ( var z = from.z, Z = from.z + size.z; z < Z; ++ z ) {
+                    if ( this.scope.voxelEngine.getVoxel( [ x, y, z ] ) !== VOXEL.NOP ) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
 
     }.bind( this );
 
-    var delayed = GAME.delayedCallback( callback );
-    check( 'x', 'y', 'z', delayed.step( ) );
-    check( 'y', 'x', 'z', delayed.step( ) );
-    check( 'z', 'x', 'y', delayed.step( ) );
-    delayed.release( );
+    callback( null, check( 'x', 'y', 'z' ), check( 'y', 'x', 'z' ), check( 'z', 'x', 'y' ) );
 
 };
