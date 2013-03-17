@@ -2,22 +2,26 @@ var State = State || Object.create( null );
 
 State.Game = function ( top ) {
 
+	this.ready = false;
+
     this.top = top;
     this.scope = null;
 
 };
 
-State.Game.prototype.construct = function ( ) {
+State.Game.LoadRadius = 10;
+State.Game.WorldHeight = 64;
 
-    var top = this.top;
-    delete this.top;
+State.Game.prototype.construct = function ( ) {
 
     hardLoader
 
-        // Allow to use the data of the parent scope
-        .push( 'direct', function ( data ) {
-            data.top = top;
-        }.bind( this ) )
+    	// The whole class will be able to access the scope
+	    .push( 'direct', function ( data ) {
+			this.scope = data;
+			data.top = this.top;
+			delete this.top;
+		}.bind( this ) )
 
         // Initializes THREE objects
         .push( 'direct', function ( data ) {
@@ -39,8 +43,9 @@ State.Game.prototype.construct = function ( ) {
         .push( 'texture', 'block:grass', 'images/grass.png' )
         .push( 'texture', 'block:dirt', 'images/dirt.png' )
 
-        // Creates voxel manager
+        // Creates world generator & voxel manager
         .push( 'direct', function ( data ) {
+			data.generator = new PERLIN.WebGLGenerator( 100, 100 ).generate( );
             data.voxelEngine = new VOXEL.Engine( );
             data.top.scene.add( ( data.voxelManager = new VOXEL.ThreeManager( data.voxelEngine, [
                 new THREE.MeshLambertMaterial( { map : data[ 'block:grass' ] } ),
@@ -50,59 +55,80 @@ State.Game.prototype.construct = function ( ) {
 
         // Creates world
         .push( 'deferred', function ( data, callback ) {
-
-            var width = 100;
-            var depth = 100;
-            var height = 30;
-
-			var ox = 0;
-			var oy = 0;
-			var oz = 0;
-
-            var startRegionKey = VOXEL.getMainRegionKeyFromWorldVoxel( [ ox, oy, oz ] );
-            var endRegionKey = VOXEL.getMainRegionKeyFromWorldVoxel( [ ox + width, oy + height, oz + depth ] );
-
-            for ( var regionKey = startRegionKey.slice( ); regionKey[ 0 ] <= endRegionKey[ 0 ]; ++ regionKey[ 0 ] ) {
-                for ( regionKey[ 1 ] = startRegionKey[ 1 ]; regionKey[ 1 ] <= endRegionKey[ 1 ]; ++ regionKey[ 1 ] ) {
-                    for ( regionKey[ 2 ] = startRegionKey[ 2 ]; regionKey[ 2 ] <= endRegionKey[ 2 ]; ++ regionKey[ 2 ] ) {
-                        data.voxelEngine.setRegion( regionKey, new VOXEL.Region( ) );
-                    }
-                }
-            }
-
-            var perlin = new PERLIN.WebGLGenerator( width + 1, depth + 1 ).generate( );
-
-            var operations = [ ];
-            for ( var x = 0; x < width; ++ x ) {
-                for ( var z = 0; z < depth; ++ z ) {
-					var Y = Math.floor( perlin.get( x, z ) * 20 );
-                    for ( var y1 = 0; y1 < Y; ++ y1 ) {
-                        data.voxelEngine.setVoxel( [ ox + x, oy + y1, oz + z ], VOXEL.L0 | 0 );
-                    } for ( var y2 = Y; y2 < height / 2; ++ y2 ) {
-                        data.voxelEngine.setVoxel( [ ox + x, oy + y2, oz + z ], VOXEL.L1 | 1 );
-                    }
-                }
-            }
-
+			this.loadEnviron( data.player.position );
             data.voxelEngine.polygonize( function ( err, total, progress ) {
                 callback( progress / total );
             } );
-        }, 100 )
+        }.bind( this ), 100 )
+
+    	// Ask mouse lock
+	    .push( 'direct', function ( data ) {
+			GAME.mouse.pointerMode( data.top.renderer.domElement );
+			document.addEventListener( 'click', function ( ) {
+				GAME.mouse.pointerMode( data.top.renderer.domElement );
+			} );
+    	} )
 
     .start( function ( data ) {
 
-        this.scope = data;
+		this.ready = true;
 
     }.bind( this ) );
 
 };
 
-State.Game.prototype.update = function ( delta ) {
+State.Game.prototype.loadRegion = function ( regionKey ) {
+	
+	if ( this.scope.voxelEngine.getRegion( regionKey ) )
+		return ;
 
-    if ( ! this.scope ) return ;
+    this.scope.voxelEngine.setRegion( regionKey, new VOXEL.Region( ) );
+	
+    var operations = [ ];
+    for ( var x = regionKey[ 0 ] * VOXEL.RegionWidth, rx = 0; rx < VOXEL.RegionWidth; ++ rx ) {
+		for ( var z = regionKey[ 2 ] * VOXEL.RegionDepth, rz = 0; rz < VOXEL.RegionDepth; ++ rz ) {
+			var Y0 = Math.floor( this.scope.generator.get( x + rx, z + rz ) * State.Game.WorldHeight );
+			var Y0 = 15;
+            for ( var y = 0; y < Y0; ++ y ) {
+                this.scope.voxelEngine.setVoxel( [ x + rx, y, z + rz ], VOXEL.L0 | 0 );
+            }
+        }
+    }
+	
+};
 
-    if ( this.pending ) return ;
-    this.pending = true;
+State.Game.prototype.loadEnviron = function ( position ) {
+
+	var centerRegion = VOXEL.getMainRegionKeyFromWorldVoxel( [
+		Math.floor( position.x ),
+		Math.floor( position.y ),
+		Math.floor( position.z )
+	] );
+
+	var radiusX = Math.ceil( State.Game.LoadRadius / VOXEL.RegionWidth );
+	var radiusY = Math.ceil( State.Game.WorldHeight / VOXEL.RegionHeight );
+	var radiusZ = Math.ceil( State.Game.LoadRadius / VOXEL.RegionDepth );
+
+	var startRegion = [ centerRegion[ 0 ] - radiusX, 0, centerRegion[ 2 ] - radiusZ ];
+	var endRegion = [ centerRegion[ 0 ] + radiusX, radiusY, centerRegion[ 2 ] + radiusZ ];
+
+	for ( var regionKey = startRegion.slice( ); regionKey[ 0 ] < endRegion[ 0 ]; ++ regionKey[ 0 ] ) {
+		for ( regionKey[ 1 ] = startRegion[ 1 ]; regionKey[ 1 ] < endRegion[ 1 ]; ++ regionKey[ 1 ] ) {
+			for ( regionKey[ 2 ] = startRegion[ 2 ]; regionKey[ 2 ] < endRegion[ 2 ]; ++ regionKey[ 2 ] ) {
+				this.loadRegion( regionKey );
+			}
+		}
+	}
+
+};
+
+State.Game.prototype.updateCamera = function ( delta ) {
+	
+	this.scope.player.rotation.y -= GAME.mouse.movement( ).x * Math.PI / 5 * delta;
+	
+};
+
+State.Game.prototype.updatePlayer = function ( delta ) {
 
     this.scope.player.velocity.add( this.scope.player.acceleration.clone( ).multiplyScalar( delta ) );
 
@@ -117,22 +143,37 @@ State.Game.prototype.update = function ( delta ) {
     if ( GAME.keyboard.pressed( GAME.Key.Space, true ) )
         this.scope.player.velocity.y += 8 * 2;
 
-    this.scope.player.velocity.x += xKeysVelocity;
-    this.scope.player.velocity.z += zKeysVelocity;
-    var frameVelocity = this.scope.player.velocity.clone( ).multiplyScalar( delta );
-    this.scope.player.velocity.z -= zKeysVelocity;
-    this.scope.player.velocity.x -= xKeysVelocity;
+	var directionMatrix = new THREE.Matrix4( ).makeRotationAxis( new THREE.Vector3( 0, 1, 0 ), this.scope.player.rotation.y );
 
-    this.collide( this.scope.player, frameVelocity, function ( err, xCollision, yCollision, zCollision ) {
+    var frameVelocity = this.scope.player.velocity.clone( ).add( new THREE.Vector3(
+		xKeysVelocity, 0, zKeysVelocity
+	).applyMatrix4( directionMatrix ) ).multiplyScalar( delta );
 
-        if ( xCollision ) this.scope.player.velocity.x = frameVelocity.x = 0;
-        if ( yCollision ) this.scope.player.velocity.y = frameVelocity.y = 0;
-        if ( zCollision ) this.scope.player.velocity.z = frameVelocity.z = 0;
-        this.scope.player.position.add( frameVelocity );
+    var collisions = this.collide( this.scope.player, frameVelocity );
+	this.scope.player.velocity.multiply( collisions );
+	frameVelocity.multiply( collisions );
 
-        this.pending = false;
+    this.scope.player.position.add( frameVelocity );
 
-    }.bind( this ) );
+	$( '#position .cursor' ).text( [
+		'x : ' + Math.floor( this.scope.player.position.x * 100 ) / 100,
+		'y : ' + Math.floor( this.scope.player.position.y * 100 ) / 100,
+		'z : ' + Math.floor( this.scope.player.position.z * 100 ) / 100
+	].join( ', ' ) );
+	
+	this.loadEnviron( this.scope.player.position );
+    this.scope.voxelEngine.polygonize( );
+
+};
+
+State.Game.prototype.update = function ( delta ) {
+
+    if ( ! this.ready ) return ;
+
+	if ( GAME.mouse.pointerMode( ) === this.scope.top.renderer.domElement ) {
+		this.updateCamera( delta );
+		this.updatePlayer( delta );
+	}
 
 };
 
@@ -141,7 +182,7 @@ State.Game.prototype.collide = function ( component, velocity, callback ) {
     var check = function ( dAxis, uAxis, vAxis ) {
 
         if ( ! velocity[ dAxis ] ) {
-            return false; }
+            return 1; }
 
         var direction = velocity[ dAxis ] ? velocity[ dAxis ] > 0 ? 1 : - 1 : 0;
 
@@ -160,16 +201,16 @@ State.Game.prototype.collide = function ( component, velocity, callback ) {
                 for ( var z = from.z, Z = from.z + size.z; z < Z; ++ z ) {
 					var value = this.scope.voxelEngine.getVoxel( [ x, y, z ] );
                     if ( value !== VOXEL.NOP && value !== undefined ) {
-                        return true;
+                        return 0;
                     }
                 }
             }
         }
 
-        return false;
+        return 1;
 
     }.bind( this );
 
-    callback( null, check( 'x', 'y', 'z' ), check( 'y', 'x', 'z' ), check( 'z', 'x', 'y' ) );
+    return new THREE.Vector3( check( 'x', 'y', 'z' ), check( 'y', 'x', 'z' ), check( 'z', 'x', 'y' ) );
 
 };
