@@ -133,12 +133,12 @@ State.Game.prototype.updatePlayer = function ( delta ) {
     this.scope.player.velocity.add( this.scope.player.acceleration.clone( ).multiplyScalar( delta ) );
 
     var zKeysVelocity = 0;
-    if ( GAME.keyboard.pressed( GAME.Key.Up ) )   zKeysVelocity += 10;
-    if ( GAME.keyboard.pressed( GAME.Key.Down ) ) zKeysVelocity -= 10;
+    if ( GAME.keyboard.any( GAME.Keyset.Up ) )   zKeysVelocity += 10;
+    if ( GAME.keyboard.any( GAME.Keyset.Down ) ) zKeysVelocity -= 10;
 
     var xKeysVelocity = 0;
-    if ( GAME.keyboard.pressed( GAME.Key.Left ) )  xKeysVelocity += 10;
-    if ( GAME.keyboard.pressed( GAME.Key.Right ) ) xKeysVelocity -= 10;
+    if ( GAME.keyboard.any( GAME.Keyset.Left ) )  xKeysVelocity += 10;
+    if ( GAME.keyboard.any( GAME.Keyset.Right ) ) xKeysVelocity -= 10;
 
     if ( GAME.keyboard.pressed( GAME.Key.Space, true ) )
         this.scope.player.velocity.y += 8 * 2;
