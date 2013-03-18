@@ -110,7 +110,7 @@ State.Game.prototype.loadEnviron = function ( position ) {
 	var radiusZ = Math.ceil( State.Game.LoadRadius / VOXEL.RegionDepth );
 
 	var startRegion = [ centerRegion[ 0 ] - radiusX, 0, centerRegion[ 2 ] - radiusZ ];
-	var endRegion = [ centerRegion[ 0 ] + radiusX, radiusY, centerRegion[ 2 ] + radiusZ ];
+	var endRegion = [ centerRegion[ 0 ] + 1 + radiusX, radiusY, centerRegion[ 2 ] + 1 + radiusZ ];
 
 	for ( var regionKey = startRegion.slice( ); regionKey[ 0 ] < endRegion[ 0 ]; ++ regionKey[ 0 ] ) {
 		for ( regionKey[ 1 ] = startRegion[ 1 ]; regionKey[ 1 ] < endRegion[ 1 ]; ++ regionKey[ 1 ] ) {
