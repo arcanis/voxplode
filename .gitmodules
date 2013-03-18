@@ -1,9 +1,0 @@
-[submodule "js.game"]
-	path = js.game
-	url = git://github.com/arcanis/js.game.git
-[submodule "js.voxel"]
-	path = js.voxel
-	url = git://github.com/arcanis/js.voxel.git
-[submodule "js.perlin"]
-	path = js.perlin
-	url = git://github.com/arcanis/js.perlin.git
