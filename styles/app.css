@@ -1,11 +1,11 @@
 @import url("fonts.css");
 
-body #app { display: none; }
-body.ok #app { display: block; }
+#app {
+	display: none;
+}
 
-body #hard-loading { display: none; }
-body.hard-loading #hard-loading {
-    display: block;
+#loading {
+    display: none;
 
     position: absolute;
     left: 0; top: 0;
@@ -18,7 +18,7 @@ body.hard-loading #hard-loading {
     background: url(../images/dirt.png);
 }
 
-#hard-loading .progressbar {
+#loading .progressbar {
     position: absolute;
     left: 50%; top: 50%;
 
@@ -37,16 +37,15 @@ body.hard-loading #hard-loading {
     background: rgba(0, 0, 0, .5);
 }
 
-#hard-loading .progressbar .cursor {
+#loading .progressbar .cursor {
     width: 0;
     height: 100%;
 
     background: rgb(228, 208, 156);
 }
 
-body.hard-loading #screen { display: none; }
-body #screen {
-    display: block;
+#screen {
+    display: none;
 
     position: absolute;
     left: 0; top: 0;

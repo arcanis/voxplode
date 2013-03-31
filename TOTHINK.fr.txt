@@ -1,0 +1,1 @@
+- La dépendance sur three.Clock des timers m'embête. En théorie, la clock n'est pas censé faire partie de la bibliothèque graphique ... :(

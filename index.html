@@ -3,29 +3,13 @@
 
     <head>
         <link rel="stylesheet" type="text/css" href="styles/app.css" />
-
-        <script src="vendors/JQuery.js"></script>
-        <script>$( document ).ready( function ( ) { $( 'body' ).addClass( 'ok' ); } );</script>
-
-        <script src="vendors/Three.js"></script>
-
-        <script src="vendors/Game.js"></script>
-        <script src="vendors/Perlin.js"></script>
-        <script src="vendors/Voxel.js"></script>
-
-        <script src="scripts/hardLoader.js"></script>
-
-        <script src="scripts/component/Player.js"></script>
-
-        <script src="scripts/state/Game.js"></script>
-
-        <script src="scripts/app.js"></script>
+		<script src="vendor/require.js" data-main="entry"></script>
     </head>
 
     <body>
         <div id="app">
 
-            <div id="hard-loading">
+            <div id="loading">
                 <div class="progressbar">
                     <div class="cursor">
                     </div>
