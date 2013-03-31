@@ -18,6 +18,7 @@ define( [
 	var Pool                = SWAT.thread.Pool;
 	var Key                 = SWAT.device.Key;
 	var keyboard            = SWAT.device.keyboard;
+	var mouse               = SWAT.device.mouse;
 	var screen              = SWAT.screen;
 
 	var AxisHelper          = THREE.AxisHelper;
@@ -37,7 +38,8 @@ define( [
 		this._pool = new Pool( new Multi( [ generatorWorker, polygonizerWorker ] ), 10 );
 		
 		this._worldMaterial = new MeshFaceMaterial( [
-			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'images/grass.png' ) } )
+			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'images/grass.png' ) } ),
+			new MeshLambertMaterial( { color : 0x0000ff, transparent : true, opacity : .5 } )
 		] );
 
 		this._world = new World( );
@@ -60,17 +62,22 @@ define( [
 		this._camera.position.set( 100, 100, 100 );
 		this._camera.updateMatrixWorld( );
 		this._scene.add( this._camera );
+
+		this._light = new PointLight( 0xffffff );
+		this._scene.add( this._light );
 		
 		this._player = new Player( );
-		this._player.light = new PointLight( 0xffffff );
-		this._player.add( this._player.light );
-		this._player.acceleration = new Vector3( 0, - 13, 0 );
+		this._player.acceleration = new Vector3( 0, - 43, 0 );
 		this._player.velocity = new Vector3( 0, 0, 0 );
 		this._player.position.set( 0, 20, 0 );
 		this._scene.add( this._player );
 		this._physic.push( this._player );
 		
 		this._loadRegionsAt( [ 0, 0, 0 ], 3 );
+
+		screen.domElement.addEventListener( 'click', function ( ) {
+			screen.domElement.requestPointerLock( );
+		} );
 
 	};
 
@@ -84,7 +91,7 @@ define( [
 
 			// JUMP, JUMP, JUMP ALL AROUND
 			if ( keyboard.pressed( Key.SPACE ) && object.velocity.y <= 0 )
-				object.velocity.y += 7;
+				object.velocity.y += 20;
 
 			// Keyboard controls
 			var velocity = object.velocity.clone( ).add( new Vector3(
@@ -100,7 +107,6 @@ define( [
 			
 			// Collision detection
 			var collisions = this._computeCollisions( object, velocity );
-			console.log( collisions.x, collisions.y, collisions.z );
 			object.velocity.multiply( collisions );
 			velocity.multiply( collisions );
 
@@ -108,11 +114,23 @@ define( [
 			object.position.add( velocity );
 		}, this );
 
+		var playerPosition = [ Math.floor( this._player.position.x ), Math.floor( this._player.position.y ), Math.floor( this._player.position.z ) ];
+		this._loadRegionsAt( playerPosition, 3 );
+
 	};
 
-	Game.prototype.drawUpdate = function ( ) {
+	Game.prototype.drawUpdate = function ( timer ) {
+
+		var delta = timer.clock.getDelta( );
+
+		this._player.rotation.y -= mouse.movement.x * Math.PI / 5 * delta;
+		mouse.movement.x = 0;
 
 		this._camera.position.copy( this._player.position );
+		this._camera.position.add( new Vector3( 0, 4, 0 ) );
+		this._camera.rotation.copy( this._player.rotation );
+
+		this._light.position.copy ( this._camera.position );
 
 		this.render( );
 		
