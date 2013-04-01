@@ -121,26 +121,26 @@ define( [
 			index : {
 				itemSize : 1,
 				array : new Uint16Array( buffers.indices ),
-				numItems : buffers.polygonCount * 3
+				numItems : buffers.triangleCount * 3
 			},
 
 			position : {
 				itemSize : 3,
 				array : new Float32Array( buffers.positions ),
-				numItems : buffers.polygonCount * 3 * 3
+				numItems : buffers.triangleCount * 3 * 3
 			},
 
 			normal : {
 				itemSize : 3,
 				array : new Float32Array( buffers.normals ),
-				numItems : buffers.polygonCount * 3 * 3
+				numItems : buffers.triangleCount * 3 * 3
 			}
 
 		};
 		
 		geometry.offsets = [ {
 			start : 0,
-			count : buffers.polygonCount * 3,
+			count : buffers.triangleCount * 3,
 			index : 0
 		} ];
 
