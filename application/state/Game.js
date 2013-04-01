@@ -22,7 +22,7 @@ define( [
 	var mouse               = SWAT.device.mouse;
 	var screen              = SWAT.screen;
 
-	var AxisHelper          = THREE.AxisHelper;
+	var Fog                 = THREE.Fog;
 	var ImageUtils          = THREE.ImageUtils;
 	var Matrix4             = THREE.Matrix4;
 	var MeshLambertMaterial = THREE.MeshLambertMaterial;
@@ -57,8 +57,9 @@ define( [
 		this._physic = [ ];
 		
 		this._scene = new Scene( );
+		this._scene.fog = new Fog( 0xcce0ff, 500, 1000 );
 		this._scene.add( this._world3D );
-
+		
 		this._camera = new PerspectiveCamera( );
 		this._cameraPitch = new Object3D( );
 		this._cameraYaw = new Object3D( );
@@ -79,8 +80,9 @@ define( [
 		this._scene.add( this._player );
 		this._physic.push( this._player );
 		
-		this._loadRegionsAt( [ 0, 0, 0 ], 3 );
+		this._loadRegionsAt( [ 0, 0, 0 ], 5 );
 
+		screen.setClearColor( this._scene.fog.color );
 		screen.domElement.addEventListener( 'click', function ( ) {
 			screen.domElement.requestPointerLock( );
 		} );
@@ -121,7 +123,7 @@ define( [
 		}, this );
 
 		var playerPosition = [ Math.floor( this._player.position.x ), Math.floor( this._player.position.y ), Math.floor( this._player.position.z ) ];
-		this._loadRegionsAt( playerPosition, 1 );
+		this._loadRegionsAt( playerPosition, 5 );
 
 	};
 
