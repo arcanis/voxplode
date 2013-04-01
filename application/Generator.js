@@ -50,6 +50,8 @@ define( [
 
 		this._pool.push( {
 			
+			id : regionKey.toString( ),
+			
 			cmd : 'generate',
 			
 			width : Region.WIDTH,
@@ -58,7 +60,7 @@ define( [
 			
 			regionKey : regionKey.slice( )
 			
-		}, { id : regionKey.toString( ) } );
+		} );
 		
 		return this;
 

@@ -37,6 +37,8 @@ define( [
 		
 		this._pool.push( {
 			
+			id : regionKey.toString( ),
+
 			cmd : 'polygonize',
 			
 			width : Region.WIDTH,
@@ -46,7 +48,7 @@ define( [
 			regionKey : regionKey.slice( ),
 			buffer : region.data.buffer
 			
-		}, { id : regionKey.toString( ) } );
+		}, { uniqueStrategy : 'replace' } );
 
 		return this;
 		

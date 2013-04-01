@@ -68,24 +68,31 @@ define( [
 
         var exportBorders = function ( cx, cy, cz ) {
 
-            var target = this._regions[[ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ]];
+			var targetRegionKey = [ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ];
+            var targetRegion = this._regions[ targetRegionKey ];
 
-            if ( ! target )
+            if ( ! targetRegion )
 				return ;
 
-			copyBorders( target, region, cx, cy, cz );
+			copyBorders( targetRegion, region, cx, cy, cz );
+
+			this.dispatchEvent( 'update', {
+				regionKey : targetRegionKey,
+				region : targetRegion
+			} );
 
         }.bind( this );
 
 
         var importBorders = function ( cx, cy, cz ) {
 
-            var source = this._regions[[ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ]];
+			var sourceRegionKey = [ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ];
+            var sourceRegion = this._regions[ sourceRegion ];
 
-            if ( ! source )
+            if ( ! sourceRegion )
 				return ;
 
-			copyBorders( region, source, cx, cy, cz );
+			copyBorders( region, sourceRegion, cx, cy, cz );
 
         }.bind( this );
 
