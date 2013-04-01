@@ -17,6 +17,7 @@ define( [
 	var Multi               = SWAT.thread.Multi;
 	var Pool                = SWAT.thread.Pool;
 	var Key                 = SWAT.device.Key;
+	var Keyset              = SWAT.device.Keyset;
 	var keyboard            = SWAT.device.keyboard;
 	var mouse               = SWAT.device.mouse;
 	var screen              = SWAT.screen;
@@ -59,9 +60,14 @@ define( [
 		this._scene.add( this._world3D );
 
 		this._camera = new PerspectiveCamera( );
-		this._camera.position.set( 100, 100, 100 );
-		this._camera.updateMatrixWorld( );
-		this._scene.add( this._camera );
+		this._cameraPitch = new Object3D( );
+		this._cameraYaw = new Object3D( );
+		this._cameraBase = new Object3D( );
+
+		this._scene.add( this._cameraBase );
+		this._cameraBase.add( this._cameraYaw );
+		this._cameraYaw.add( this._cameraPitch );
+		this._cameraPitch.add( this._camera );
 
 		this._light = new PointLight( 0xffffff );
 		this._scene.add( this._light );
@@ -95,14 +101,14 @@ define( [
 
 			// Keyboard controls
 			var velocity = object.velocity.clone( ).add( new Vector3(
-				keyboard.some( Key.Set.RIGHT ) - keyboard.some( Key.Set.LEFT ), 0,
-				keyboard.some( Key.Set.DOWN ) - keyboard.some( Key.Set.UP ) ).multiplyScalar( 10 ) );
+				keyboard.some( Keyset.RIGHT ) - keyboard.some( Keyset.LEFT ), 0,
+				keyboard.some( Keyset.DOWN ) - keyboard.some( Keyset.UP ) ).multiplyScalar( 10 ) );
 
 			// Delta factor
 			velocity.multiplyScalar( delta );
 
 			// Player orientation
-			var rotationMatrix = new Matrix4( ).makeRotationAxis( new Vector3( 0, 1, 0 ), this._player.rotation.y );
+			var rotationMatrix = new Matrix4( ).makeRotationAxis( new Vector3( 0, 1, 0 ), this._cameraYaw.rotation.y );
 			velocity.applyMatrix4( rotationMatrix );
 			
 			// Collision detection
@@ -115,7 +121,7 @@ define( [
 		}, this );
 
 		var playerPosition = [ Math.floor( this._player.position.x ), Math.floor( this._player.position.y ), Math.floor( this._player.position.z ) ];
-		this._loadRegionsAt( playerPosition, 3 );
+		this._loadRegionsAt( playerPosition, 1 );
 
 	};
 
@@ -123,14 +129,17 @@ define( [
 
 		var delta = timer.clock.getDelta( );
 
-		this._player.rotation.y -= mouse.movement.x * Math.PI / 5 * delta;
-		mouse.movement.x = 0;
+		var maxPitch = Math.PI / 2 * .9;
+		this._cameraYaw.rotation.y -= mouse.movement.x * Math.PI / 5 * delta;
+		this._cameraPitch.rotation.x -= mouse.movement.y * Math.PI / 5 * delta;
+		this._cameraPitch.rotation.x = SWAT.math.clamp( this._cameraPitch.rotation.x, - maxPitch, maxPitch );
+		console.log( this._cameraPitch.rotation.x );
+		mouse.movement.set( 0, 0 );
 
-		this._camera.position.copy( this._player.position );
-		this._camera.position.add( new Vector3( 0, 4, 0 ) );
-		this._camera.rotation.copy( this._player.rotation );
+		this._cameraBase.position.copy( this._player.position );
+		this._cameraBase.position.add( new Vector3( 0, 4, 0 ) );
 
-		this._light.position.copy ( this._camera.position );
+		this._light.position.copy ( this._cameraBase.position );
 
 		this.render( );
 		
