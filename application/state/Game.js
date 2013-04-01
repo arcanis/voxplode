@@ -25,6 +25,7 @@ define( [
 	var Fog                 = THREE.Fog;
 	var ImageUtils          = THREE.ImageUtils;
 	var Matrix4             = THREE.Matrix4;
+	var MeshBasicMaterial   = THREE.MeshBasicMaterial;
 	var MeshLambertMaterial = THREE.MeshLambertMaterial;
 	var MeshFaceMaterial    = THREE.MeshFaceMaterial;
 	var Mesh                = THREE.Mesh;
@@ -43,6 +44,8 @@ define( [
 			new MeshLambertMaterial( { color : 0x0000ff, transparent : true, opacity : .5 } )
 		] );
 
+		this._worldMaterial = new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'images/grass.png' ) } );
+		
 		this._world = new World( );
 		this._world3D = new Object3D( );
 		
@@ -168,19 +171,19 @@ define( [
 			
 			if ( ! direction[ dAxis ] ) {
 				return 1; }
-			
+
 			var sign = direction[ dAxis ] ? direction[ dAxis ] > 0 ? 1 : - 1 : 0;
-			
+
 			var from = new Vector3( );
 			from[ uAxis ] = Math.floor( position[ uAxis ] - size[ uAxis ] / 2 );
 			from[ vAxis ] = Math.floor( position[ vAxis ] - size[ vAxis ] / 2 );
 			from[ dAxis ] = Math.floor( position[ dAxis ] + size[ dAxis ] / 2 * sign + direction[ dAxis ] );
-			
+
 			var to = new Vector3( );
 			to[ uAxis ] = Math.ceil( position[ uAxis ] + size[ uAxis ] / 2 );
 			to[ vAxis ] = Math.ceil( position[ vAxis ] + size[ vAxis ] / 2 );
 			to[ dAxis ] = from[ dAxis ] + 1;
-			
+
 			for ( var x = from.x, X = to.x; x < X; ++ x ) {
 				for ( var y = from.y, Y = to.y; y < Y; ++ y ) {
 					for ( var z = from.z, Z = to.z; z < Z; ++ z ) {
