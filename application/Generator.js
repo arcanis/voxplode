@@ -12,6 +12,8 @@ define( [
 
 		Event.initialize( this );
 		
+		this._pending = Object.create( null );
+		
 		this._seed = seed;
 
 	};
@@ -20,37 +22,59 @@ define( [
 
 	Generator.prototype.setPool = function ( pool ) {
 		
-		this._pool = pool;
-
-		this._pool.addEventListener( 'complete', function ( e ) {
-
-			if ( e.task.cmd !== 'generate' )
-				return ;
-			
-			this.dispatchEvent( 'generation', {
-				regionKey : e.task.regionKey,
-				region : new Region( e.data.buffer )
-			} );
-
-		}.bind( this ) );
+		if ( this._pool ) {
+			this._pool.removeEventListener( 'push', this._poolPush, this );
+			this._pool.removeEventListener( 'complete', this._poolComplete, this );
+		}
 		
-		this._pool.broadcast( {
-			
-			cmd : 'seed',
+		this._pool = pool;
+		
+		if ( this._pool ) {
+			this._pool.addEventListener( 'push', this._poolPush, this );
+			this._pool.addEventListener( 'complete', this._poolComplete, this );
 
-			seed : this._seed
-
-		} );
-
+			this._pool.broadcast( {
+				
+				cmd : 'seed',
+				
+				seed : this._seed
+				
+			} );
+		}
+		
 		return this;
+
+	};
+	
+	Generator.prototype._poolPush = function ( e ) {
+		
+		if ( e.task.cmd !== 'generate' )
+			return ;
+		
+		this._pending[ e.task.regionKey ] = true;
+
+	};
+
+	Generator.prototype._poolComplete = function ( e ) {
+
+		if ( e.task.cmd !== 'generate' )
+			return ;
+
+		delete this._pending[ e.task.regionKey ];
+
+		this.dispatchEvent( 'generation', {
+			regionKey : e.task.regionKey,
+			region : new Region( e.data.buffer )
+		} );
 
 	};
 
 	Generator.prototype.generate = function ( regionKey ) {
 
+		if ( this._pending[ regionKey ] )
+			return this;
+
 		this._pool.push( {
-			
-			id : regionKey.toString( ),
 			
 			cmd : 'generate',
 			

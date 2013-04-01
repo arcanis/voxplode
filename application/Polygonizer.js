@@ -14,11 +14,13 @@ define( [
 	var Vector2  = THREE.Vector2;
 	var Vector3  = THREE.Vector3;
 
-	var Polygonizer = function ( pool ) {
+	var Polygonizer = function ( ) {
 
 		Event.initialize( this );
-		
-		this._pool = pool;
+
+		this._tasks = Object.create( null );
+
+		this._version = 0;
 		
 	};
 
@@ -26,20 +28,33 @@ define( [
 	
 	Polygonizer.prototype.setPool = function ( pool ) {
 		
-		if ( this._pool )
-			this._pool.removeEventListener( 'complete', this._handler, this );
+		if ( this._pool ) {
+			this._pool.removeEventListener( 'push', this._poolPush, this );
+			this._pool.removeEventListener( 'shift', this._poolShift, this );
+			this._pool.removeEventListener( 'complete', this._poolComplete, this );
+		}
 
-		( this._pool = pool ).addEventListener( 'complete', this._handler, this );
+		this._pool = pool;
+		
+		if ( this._pool ) {
+			this._pool.addEventListener( 'push', this._poolPush, this );
+			this._pool.addEventListener( 'shift', this._poolShift, this );
+			this._pool.addEventListener( 'complete', this._poolComplete, this );
+		}
+		
+		return this;
 		
 	};
 	
 	Polygonizer.prototype.polygonize = function ( regionKey, region ) {
 		
+		if ( this._tasks[ regionKey ] && this._tasks[ regionKey ].pending > 0 )
+			return this;
+		
 		this._pool.push( {
-			
-			id : regionKey.toString( ),
 
 			cmd : 'polygonize',
+			version : ++ this._version,
 			
 			width : Region.WIDTH,
 			height : Region.HEIGHT,
@@ -48,25 +63,59 @@ define( [
 			regionKey : regionKey.slice( ),
 			buffer : region.data.buffer
 			
-		}, { uniqueStrategy : 'replace' } );
+		} );
 
 		return this;
 		
 	};
 
-	Polygonizer.prototype._handler = function ( e ) {
+	Polygonizer.prototype._poolPush = function ( e ) {
 
 		if ( e.task.cmd !== 'polygonize' )
 			return ;
 		
+		if ( ! this._tasks[ e.task.regionKey ] )
+			this._tasks[ e.task.regionKey ] = { pending : 0, processing : 0, version : null };
+		
+		this._tasks[ e.task.regionKey ].pending += 1;
+
+	};
+
+	Polygonizer.prototype._poolShift = function ( e ) {
+
+		if ( e.task.cmd !== 'polygonize' )
+			return ;
+		
+		this._tasks[ e.task.regionKey ].pending -= 1;
+		this._tasks[ e.task.regionKey ].processing += 1;
+
+	};
+
+	Polygonizer.prototype._poolComplete = function ( e ) {
+
+		if ( e.task.cmd !== 'polygonize' )
+			return ;
+
+		this._tasks[ e.task.regionKey ].processing -= 1;
+		var version = this._tasks[ e.task.regionKey ].version;
+
+		if ( ! this._tasks[ e.task.regionKey ].pending && ! this._tasks[ e.task.regionKey ].processing )
+			delete this._tasks[ e.task.regionKey ];
+
+		if ( version !== null && version > e.task.version )
+			return ;
+
+		if ( this._tasks[ e.task.regionKey ] )
+			this._tasks[ e.task.regionKey ].version = e.task.version;
+
 		this.dispatchEvent( 'polygonization', {
 			regionKey : e.task.regionKey,
-			geometry : this._geometry( e.data.polygons )
+			geometry : this._buildGeometry( e.data.polygons )
 		} );
 
 	};
 
-	Polygonizer.prototype._geometry = function ( polygons ) {
+	Polygonizer.prototype._buildGeometry = function ( polygons ) {
 
 		if ( ! polygons.length )
 			return null;
