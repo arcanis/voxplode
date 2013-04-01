@@ -87,7 +87,7 @@ define( [
         var importBorders = function ( cx, cy, cz ) {
 
 			var sourceRegionKey = [ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ];
-            var sourceRegion = this._regions[ sourceRegion ];
+            var sourceRegion = this._regions[ sourceRegionKey ];
 
             if ( ! sourceRegion )
 				return ;

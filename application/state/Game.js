@@ -133,7 +133,6 @@ define( [
 		this._cameraYaw.rotation.y -= mouse.movement.x * Math.PI / 5 * delta;
 		this._cameraPitch.rotation.x -= mouse.movement.y * Math.PI / 5 * delta;
 		this._cameraPitch.rotation.x = SWAT.math.clamp( this._cameraPitch.rotation.x, - maxPitch, maxPitch );
-		console.log( this._cameraPitch.rotation.x );
 		mouse.movement.set( 0, 0 );
 
 		this._cameraBase.position.copy( this._player.position );

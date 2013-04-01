@@ -38,7 +38,7 @@ self.importScripts( 'vendor/Noise.js' );
 						data[ z * ( width + 1 ) * ( height + 1 ) + y * ( width + 1 ) + x ] = GRASS;
 					for ( var y = size; y < height * 1e-2; ++ y )
 						data[ z * ( width + 1 ) * ( height + 1 ) + y * ( width + 1 ) + x ] = WATER; } }
-		
+			
 			self.postMessage( {
 				buffer : data.buffer
 			} );
