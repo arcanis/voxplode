@@ -6,7 +6,7 @@ require( {
 
 		'JQUERY' : '../vendor/JQuery',
 		'THREE'  : '../vendor/Three',
-		'SWAT'   : '../swat/Swat.min',
+		'SWAT'   : window.location.hostname === 'localhost' ? '../swat/Swat.min' : '../vendor/Swat.min',
 
 		'url'      : '../vendor/Require.url',
 		'domReady' : '../vendor/Require.domReady'
