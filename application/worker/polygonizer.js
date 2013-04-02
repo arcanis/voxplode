@@ -110,9 +110,12 @@
 								vertices[ TriangleTable[ cubeIndex ][ t + 1 ] ],
 								vertices[ TriangleTable[ cubeIndex ][ t + 0 ] ] ];
 							
-							var value = triangleVertices.slice( )
-								.filter( function ( n ) { return n[ 3 ] >> 24 = layer; } )
-								.sort( function ( a, b ) { return a[ 1 ] > b[ 1 ]; } )[ 0 ][ 3 ] & 0x00ffffff;
+							var admissibleValues = triangleVertices.slice( ).filter( function ( n ) { return n[ 3 ] >> 24 === layer; } );
+							
+							if ( admissibleValues.length === 0 )
+								continue ;
+							
+							var value = admissibleValues.sort( function ( a, b ) { return a[ 1 ] > b[ 1 ]; } )[ 0 ][ 3 ] & 0x00ffffff;
 
 							saveTriangle( value, {
 								vertices : triangleVertices,
