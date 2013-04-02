@@ -107,44 +107,49 @@ define( [
 
 		this.dispatchEvent( 'polygonization', {
 			regionKey : e.task.regionKey,
-			geometry : this._buildGeometry( e.data )
+			geometries : this._buildGeometries( e.data )
 		} );
 
 	};
 	
-	Polygonizer.prototype._buildGeometry = function ( buffers ) {
+	Polygonizer.prototype._buildGeometries = function ( geometriesBuffers ) {
 
-		var geometry = new BufferGeometry( );
+		return Object.keys( geometriesBuffers ).reduce( function ( geometries, materialIndex ) {
 
-		geometry.attributes = {
+			var geometry = geometries[ materialIndex ] = new BufferGeometry( );
+			var geometryBuffers = geometriesBuffers[ materialIndex ];
 			
-			index : {
-				itemSize : 1,
-				array : new Uint16Array( buffers.indices ),
-				numItems : buffers.triangleCount * 3
-			},
-
-			position : {
-				itemSize : 3,
-				array : new Float32Array( buffers.positions ),
-				numItems : buffers.triangleCount * 3 * 3
-			},
-
-			normal : {
-				itemSize : 3,
-				array : new Float32Array( buffers.normals ),
-				numItems : buffers.triangleCount * 3 * 3
-			}
-
-		};
-		
-		geometry.offsets = [ {
-			start : 0,
-			count : buffers.triangleCount * 3,
-			index : 0
-		} ];
-
-		return geometry;
+			geometry.attributes = {
+				
+				index : {
+					itemSize : 1,
+					array : new Uint16Array( geometryBuffers.indices ),
+					numItems : geometryBuffers.triangleCount * 3
+				},
+				
+				position : {
+					itemSize : 3,
+					array : new Float32Array( geometryBuffers.positions ),
+					numItems : geometryBuffers.triangleCount * 3 * 3
+				},
+				
+				normal : {
+					itemSize : 3,
+					array : new Float32Array( geometryBuffers.normals ),
+					numItems : geometryBuffers.triangleCount * 3 * 3
+				}
+				
+			};
+			
+			geometry.offsets = [ {
+				start : 0,
+				count : geometryBuffers.triangleCount * 3,
+				index : 0
+			} ];
+			
+			return geometries;
+			
+		}, { } );
 
 	};
 	

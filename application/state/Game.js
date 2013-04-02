@@ -39,13 +39,11 @@ define( [
 
 		this._pool = new Pool( new Multi( [ generatorWorker, polygonizerWorker ] ), 10 );
 		
-		this._worldMaterial = new MeshFaceMaterial( [
-			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'images/grass.png' ) } ),
-			new MeshLambertMaterial( { color : 0x0000ff, transparent : true, opacity : .5 } )
-		] );
+		this._worldMaterials = [
+			new MeshLambertMaterial( { color : 0xff0000 } ),
+			new MeshLambertMaterial( { color : 0x0000ff } )
+		];
 
-		this._worldMaterial = new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'images/grass.png' ) } );
-		
 		this._world = new World( );
 		this._world3D = new Object3D( );
 		
@@ -212,9 +210,12 @@ define( [
 			if ( regions[ e.regionKey ] )
 				this._world3D.remove( regions[ e.regionKey ] );
 
-			if ( e.geometry ) {
-				this._world3D.add( regions[ e.regionKey ] = new Mesh( e.geometry, this._worldMaterial ) );
+			if ( e.geometries ) {
+				this._world3D.add( regions[ e.regionKey ] = new Object3D( ) );
 				regions[ e.regionKey ].position.set( e.regionKey[ 0 ] * Region.WIDTH, e.regionKey[ 1 ] * Region.HEIGHT, e.regionKey[ 2 ] * Region.DEPTH );
+				Object.keys( e.geometries ).forEach( function ( materialIndex ) {
+					regions[ e.regionKey ].add( new Mesh( e.geometries[ materialIndex ], this._worldMaterials[ materialIndex ] ) );
+				}, this );
 			}
 
 		}.bind( this ) );

@@ -37,7 +37,7 @@ self.importScripts( 'vendor/Noise.js' );
 					var size = Math.floor( Math.abs( simplex ) * 10 + 4 );
 					for ( var y = 0; y < size; ++ y )
 						data[ z * ( width + 1 ) * ( height + 1 ) + y * ( width + 1 ) + x ] = GRASS;
-					for ( var y = size; y < height * 1e-2; ++ y )
+					for ( var y = size; y < height * 5e-2; ++ y )
 						data[ z * ( width + 1 ) * ( height + 1 ) + y * ( width + 1 ) + x ] = WATER; } }
 
 			if ( 0 ) // 3D generation
