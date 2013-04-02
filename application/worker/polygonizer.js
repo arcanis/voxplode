@@ -9,10 +9,9 @@
 		
 		var geometries = { };
 
-		var saveTriangle = function ( triangle ) {
-			var value = triangle.vertices.slice( ).sort( function ( a, b ) { return a[ 1 ] > b[ 1 ]; } )[ 0 ][ 3 ] & 0x00ffffff;
-			if ( ! geometries[ value ] ) geometries[ value ] = [ ];
-			geometries[ value ].push( triangle ); };
+		var saveTriangle = function ( target, triangle ) {
+			if ( ! geometries[ target ] ) geometries[ target ] = [ ];
+			geometries[ target ].push( triangle ); };
 
 		var xF = ( 1 );
 		var yF = ( width + 1 ) * ( 1 )
@@ -71,46 +70,58 @@
 						data[ positions[ 6 ][ 0 ] * xF + positions[ 6 ][ 1 ] * yF + positions[ 6 ][ 2 ] * zF ],
 						data[ positions[ 7 ][ 0 ] * xF + positions[ 7 ][ 1 ] * yF + positions[ 7 ][ 2 ] * zF ] ];
 					
-					var cubeIndex = 0
-						| ( values[ 0 ] !== AIR ? 1 << 0 : 0 )
-						| ( values[ 1 ] !== AIR ? 1 << 1 : 0 )
-						| ( values[ 2 ] !== AIR ? 1 << 2 : 0 )
-						| ( values[ 3 ] !== AIR ? 1 << 3 : 0 )
-						| ( values[ 4 ] !== AIR ? 1 << 4 : 0 )
-						| ( values[ 5 ] !== AIR ? 1 << 5 : 0 )
-						| ( values[ 6 ] !== AIR ? 1 << 6 : 0 )
-						| ( values[ 7 ] !== AIR ? 1 << 7 : 0 );
-
-					if ( EdgeTable[ cubeIndex ] === 0 )
-						continue ;
+					var layers = values
+						.map( function ( value ) { return value >> 24; } ).sort( )
+						.filter( function ( value, i, a ) { return a.indexOf( value ) === i; } );
 					
-					var vertices = [
-						EdgeTable[ cubeIndex ] & 1 << 0  ? vertexInterpolation( 0, 1 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 1  ? vertexInterpolation( 1, 2 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 2  ? vertexInterpolation( 2, 3 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 3  ? vertexInterpolation( 3, 0 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 4  ? vertexInterpolation( 4, 5 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 5  ? vertexInterpolation( 5, 6 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 6  ? vertexInterpolation( 6, 7 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 7  ? vertexInterpolation( 7, 4 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 8  ? vertexInterpolation( 0, 4 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 9  ? vertexInterpolation( 1, 5 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 10 ? vertexInterpolation( 2, 6 ) : null,
-						EdgeTable[ cubeIndex ] & 1 << 11 ? vertexInterpolation( 3, 7 ) : null ];
-
-					for ( var t = 0, T = TriangleTable[ cubeIndex ].length; t < T; t += 3 ) {
-
-						var triangleVertices = [
-							vertices[ TriangleTable[ cubeIndex ][ t + 2 ] ],
-							vertices[ TriangleTable[ cubeIndex ][ t + 1 ] ],
-							vertices[ TriangleTable[ cubeIndex ][ t + 0 ] ] ];
-
-						saveTriangle( {
-							vertices : triangleVertices,
-							normal : triangleNormal( triangleVertices )
-						} );
+					layers.forEach( function ( layer ) {
 						
-					}
+						var cubeIndex = 0
+							| ( values[ 0 ] !== AIR && values[ 0 ] >> 24 <= layer ? 1 << 0 : 0 )
+							| ( values[ 1 ] !== AIR && values[ 1 ] >> 24 <= layer ? 1 << 1 : 0 )
+							| ( values[ 2 ] !== AIR && values[ 2 ] >> 24 <= layer ? 1 << 2 : 0 )
+							| ( values[ 3 ] !== AIR && values[ 3 ] >> 24 <= layer ? 1 << 3 : 0 )
+							| ( values[ 4 ] !== AIR && values[ 4 ] >> 24 <= layer ? 1 << 4 : 0 )
+							| ( values[ 5 ] !== AIR && values[ 5 ] >> 24 <= layer ? 1 << 5 : 0 )
+							| ( values[ 6 ] !== AIR && values[ 6 ] >> 24 <= layer ? 1 << 6 : 0 )
+							| ( values[ 7 ] !== AIR && values[ 7 ] >> 24 <= layer ? 1 << 7 : 0 );
+						
+						if ( EdgeTable[ cubeIndex ] === 0 )
+							return ;
+						
+						var vertices = [
+							EdgeTable[ cubeIndex ] & 1 << 0  ? vertexInterpolation( 0, 1 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 1  ? vertexInterpolation( 1, 2 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 2  ? vertexInterpolation( 2, 3 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 3  ? vertexInterpolation( 3, 0 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 4  ? vertexInterpolation( 4, 5 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 5  ? vertexInterpolation( 5, 6 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 6  ? vertexInterpolation( 6, 7 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 7  ? vertexInterpolation( 7, 4 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 8  ? vertexInterpolation( 0, 4 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 9  ? vertexInterpolation( 1, 5 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 10 ? vertexInterpolation( 2, 6 ) : null,
+							EdgeTable[ cubeIndex ] & 1 << 11 ? vertexInterpolation( 3, 7 ) : null ];
+						
+						for ( var t = 0, T = TriangleTable[ cubeIndex ].length; t < T; t += 3 ) {
+							
+							var triangleVertices = [
+								vertices[ TriangleTable[ cubeIndex ][ t + 2 ] ],
+								vertices[ TriangleTable[ cubeIndex ][ t + 1 ] ],
+								vertices[ TriangleTable[ cubeIndex ][ t + 0 ] ] ];
+							
+							var value = triangleVertices.slice( )
+								.filter( function ( n ) { return n[ 3 ] >> 24 = layer; } )
+								.sort( function ( a, b ) { return a[ 1 ] > b[ 1 ]; } )[ 0 ][ 3 ] & 0x00ffffff;
+
+							saveTriangle( value, {
+								vertices : triangleVertices,
+								normal : triangleNormal( triangleVertices )
+							} );
+							
+						}
+						
+					} );
 
 				}
 			}
