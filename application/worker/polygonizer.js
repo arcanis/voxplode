@@ -23,7 +23,7 @@
 				positions[ a ][ 0 ] + 0.5 * ( positions[ b ][ 0 ] - positions[ a ][ 0 ] ),
 				positions[ a ][ 1 ] + 0.5 * ( positions[ b ][ 1 ] - positions[ a ][ 1 ] ),
 				positions[ a ][ 2 ] + 0.5 * ( positions[ b ][ 2 ] - positions[ a ][ 2 ] ),
-				values[ values[ a ] !== AIR ? a : b ] ] };
+				values[ values[ a ] !== AIR ? a : b ] ]; };
 
 		var triangleNormal = function ( vertices ) {
 			var axis0 = [
@@ -60,16 +60,6 @@
 						[ x + 1, y + 1, z + 1 ],
 						[ x + 1, y + 1, z + 0 ],
 						[ x + 0, y + 1, z + 0 ] ];
-					
-					var positions = [
-						[ x + 0, y + 0, z + 0 ],
-						[ x + 1, y + 0, z + 0 ],
-						[ x + 1, y + 1, z + 0 ],
-						[ x + 0, y + 1, z + 0 ],
-						[ x + 0, y + 0, z + 1 ],
-						[ x + 1, y + 0, z + 1 ],
-						[ x + 1, y + 1, z + 1 ],
-						[ x + 0, y + 1, z + 1 ] ];
 					
 					var values = [
 						data[ positions[ 0 ][ 0 ] * xF + positions[ 0 ][ 1 ] * yF + positions[ 0 ][ 2 ] * zF ],
