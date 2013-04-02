@@ -40,8 +40,8 @@ define( [
 		this._pool = new Pool( new Multi( [ generatorWorker, polygonizerWorker ] ), 10 );
 		
 		this._worldMaterials = [
-			new MeshLambertMaterial( { color : 0xff0000 } ),
-			new MeshLambertMaterial( { color : 0x0000ff } )
+			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'images/grass.png' ) } ),
+			new MeshLambertMaterial( { color : 0x0000ff, transparent : true, opacity : .5 } )
 		];
 
 		this._world = new World( );
