@@ -9,7 +9,12 @@ self.importScripts( 'vendor/Noise.js' );
 	var GRASS = T0 | 0;
 	var WATER = T1 | 1;
 	
-	var F = 1.2e-2;
+	var getNoise = function ( xF, yF, zF, x, y, z ) {
+		return ( Math.abs( noise.simplex3( x * xF, y * yF, z * zF ) ) + 0.5 ) * 2 - 1; };
+	
+	var getRoughness = getNoise.bind( null, 8e-3, 6e-3, 8e-3 );
+	var getDetail    = getNoise.bind( null, 4e-3, 4e-3, 4e-3 );
+	var getElevation = getNoise.bind( null, 1e-2, 1e-2, 1e-2 );
 
 	self.addEventListener( 'message', function ( e ) {
 		
@@ -22,7 +27,7 @@ self.importScripts( 'vendor/Noise.js' );
 			break;
 
     	case 'generate':
-
+			
 			var ox = e.data.regionKey[ 0 ], oy = e.data.regionKey[ 1 ], oz = e.data.regionKey[ 2 ];
 			var width = e.data.width, height = e.data.height, depth = e.data.depth;
 
@@ -32,20 +37,17 @@ self.importScripts( 'vendor/Noise.js' );
 				data[ t ] = AIR;
 
 			for ( var x = 0; x < width; ++ x ) {
-				for ( var z = 0; z < depth; ++ z ) {
-					var simplex = noise.simplex2( ( ox * width + x ) * F, ( oz * depth + z ) * F );
-					var size = Math.floor( Math.abs( simplex ) * 10 + 4 );
-					for ( var y = 0; y < size; ++ y )
-						data[ z * ( width + 1 ) * ( height + 1 ) + y * ( width + 1 ) + x ] = GRASS;
-					for ( var y = size; y < height * 5e-2; ++ y )
-						data[ z * ( width + 1 ) * ( height + 1 ) + y * ( width + 1 ) + x ] = WATER; } }
-
-			if ( 0 ) // 3D generation
-			for ( var x = 0; x < width; ++ x ) {
 				for ( var y = 0; y < height; ++ y ) {
 					for ( var z = 0; z < depth; ++ z ) {
-						var simplex = ( Math.abs( noise.simplex3( ( ox * width + x ) * F, ( oy * height + y ) * F, ( oz * depth + z ) * F ) ) + y / height ) / 2;
-						data[ z * ( width + 1 ) * ( height + 1 ) + y * ( width + 1 ) + x ] = simplex < .2 ? GRASS : AIR;
+
+						var roughness = getRoughness ( ox * width + x, oy * height + y, oz * depth + z );
+						var detail    = getDetail    ( ox * width + x, oy * height + y, oz * depth + z );
+						var elevation = getElevation ( ox * width + x, oy * height + y, oz * depth + z );
+
+						var combined = 1 - y / height + Math.abs( roughness * detail + elevation ) / 2;
+						var combined = 1 - y / height + roughness * elevation - detail;
+						data[ z * ( width + 1 ) * ( height + 1 ) + y * ( width + 1 ) + x ] = y === 0 || combined > .3 ? GRASS : y < 50 ? WATER : AIR;
+						
 					}
 				}
 			}

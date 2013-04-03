@@ -71,8 +71,9 @@ define( [
 		this._cameraYaw.add( this._cameraPitch );
 		this._cameraPitch.add( this._camera );
 
+		this._scene.add( new THREE.AmbientLight( 0x666666 ) );
 		this._light = new PointLight( 0xffffff );
-		this._scene.add( this._light );
+		this._cameraPitch.add( this._light );
 		
 		this._player = new Player( );
 		this._player.acceleration = new Vector3( 0, - 43, 0 );
@@ -81,7 +82,7 @@ define( [
 		this._scene.add( this._player );
 		this._physic.push( this._player );
 		
-		this._loadRegionsAt( [ 0, 0, 0 ], 5 );
+		this._loadRegionsAt( [ 0, 0, 0 ], 10 );
 
 		screen.setClearColor( this._scene.fog.color );
 		screen.domElement.addEventListener( 'click', function ( ) {
@@ -124,7 +125,11 @@ define( [
 		}, this );
 
 		var playerPosition = [ Math.floor( this._player.position.x ), Math.floor( this._player.position.y ), Math.floor( this._player.position.z ) ];
-		this._loadRegionsAt( playerPosition, 5 );
+		//this._loadRegionsAt( playerPosition, 5 );
+
+		$( '#position .x' ).text( SWAT.math.truncate( this._player.position.x, 2 ) );
+		$( '#position .y' ).text( SWAT.math.truncate( this._player.position.y, 2 ) );
+		$( '#position .z' ).text( SWAT.math.truncate( this._player.position.z, 2 ) );
 
 	};
 
@@ -140,8 +145,6 @@ define( [
 
 		this._cameraBase.position.copy( this._player.position );
 		this._cameraBase.position.add( new Vector3( 0, 4, 0 ) );
-
-		this._light.position.copy ( this._cameraBase.position );
 
 		this.render( );
 		
