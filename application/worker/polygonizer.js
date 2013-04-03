@@ -150,6 +150,7 @@
 			var indexArray    = new Int16Array( triangleCount * 3 );
 			var positionArray = new Float32Array( triangleCount * 3 * 3 );
 			var normalArray   = new Float32Array( triangleCount * 3 * 3 );
+			var uvArray       = new Float32Array( triangleCount * 3 * 2 );
 			
 			triangles.forEach( function ( triangle, triangleIndex ) {
 				
@@ -165,13 +166,18 @@
 				copy( triangle.normal, normalArray, triangleIndex * 3 * 3 + 1 * 3 );
 				copy( triangle.normal, normalArray, triangleIndex * 3 * 3 + 2 * 3 );
 				
+				copy( [ 0, 1 ], uvArray, triangleIndex * 3 * 2 + 0 * 2 );
+				copy( [ 1, 1 ], uvArray, triangleIndex * 3 * 2 + 1 * 2 );
+				copy( [ 1, 0 ], uvArray, triangleIndex * 3 * 2 + 2 * 2 );
+				
 			} );
 			
 			geometriesBuffers[ materialIndex ] = {
 				triangleCount : triangleCount,
 				indices       : indexArray.buffer,
 				positions     : positionArray.buffer,
-				normals       : normalArray.buffer
+				normals       : normalArray.buffer,
+				uvs           : uvArray.buffer
 			};
 
 			return geometriesBuffers;
@@ -197,7 +203,8 @@
 				return [
 					geometryBuffers.indices,
 					geometryBuffers.positions,
-					geometryBuffers.normals ]; } ) );
+					geometryBuffers.normals,
+					geometryBuffers.uvs ]; } ) );
 
 			self.postMessage( geometriesBuffers, transferables );
 			

@@ -137,6 +137,12 @@ define( [
 					itemSize : 3,
 					array : new Float32Array( geometryBuffers.normals ),
 					numItems : geometryBuffers.triangleCount * 3 * 3
+				},
+
+				uv : {
+					itemSize : 2,
+					array : new Float32Array( geometryBuffers.uvs ),
+					numItems : geometryBuffers.triangleCount * 3 * 2
 				}
 				
 			};
