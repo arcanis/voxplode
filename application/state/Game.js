@@ -20,7 +20,8 @@ define( [
 	var Keyset              = SWAT.device.Keyset;
 	var keyboard            = SWAT.device.keyboard;
 	var mouse               = SWAT.device.mouse;
-	var screen              = SWAT.screen;
+	var screen              = SWAT.device.screen;
+	var shell               = SWAT.exec.shell;
 
 	var Fog                 = THREE.Fog;
 	var ImageUtils          = THREE.ImageUtils;
@@ -55,7 +56,8 @@ define( [
 		
 		this._bindWorldGenerationChain( );
 		
-		this._physic = [ ];
+		this._gravity = true;
+		this._physics = [ ];
 		
 		this._scene = new Scene( );
 		this._scene.fog = new Fog( 0xcce0ff, 500, 1000 );
@@ -80,7 +82,7 @@ define( [
 		this._player.velocity = new Vector3( 0, 0, 0 );
 		this._player.position.set( 0, 20, 0 );
 		this._scene.add( this._player );
-		this._physic.push( this._player );
+		this._physics.push( this._player );
 		
 		this._loadRegionsAt( [ 0, 0, 0 ], 10 );
 
@@ -89,39 +91,56 @@ define( [
 			screen.domElement.requestPointerLock( );
 		} );
 
+		shell.registerCommand( 'goto', this._gotoCommand, this );
+		shell.registerCommand( 'gravity', this._gravityCommand, this );
+
 	};
 
 	Game.prototype.engineUpdate = function ( timer ) {
 
 		var delta = timer.clock.getDelta( );
 
-		this._physic.forEach( function ( object ) {
-			// Acceleration
-			object.velocity.add( object.acceleration.clone( ).multiplyScalar( delta ) );
+		// JUMP, JUMP, JUMP ALL AROUND
+		if ( this._gravity ) {
+			if ( keyboard.pressed( Key.SPACE ) && this._player.velocity.y <= 0 ) {
+				this._player.velocity.y += 20;
+			}
+		} else {
+			if ( keyboard.pressed( Key.SPACE ) ) {
+				this._player.position.y += 20 * delta;
+			}
+			if ( keyboard.pressed( Key.CONTROL ) ) {
+				this._player.position.y -= 20 * delta;
+			}
+		}
+		
+		// Gravity
+		this._physics.forEach( function ( object ) {
 
-			// JUMP, JUMP, JUMP ALL AROUND
-			if ( keyboard.pressed( Key.SPACE ) && object.velocity.y <= 0 )
-				object.velocity.y += 20;
+			if ( this._gravity ) object.velocity.y -= 43 * delta;
 
-			// Keyboard controls
-			var velocity = object.velocity.clone( ).add( new Vector3(
+			object.frameVelocity = object.velocity.clone( ).multiplyScalar( delta );
+
+		}, this );
+		
+		// Keyboard controls
+		this._player.frameVelocity.add( new Vector3(
 				keyboard.some( Keyset.RIGHT ) - keyboard.some( Keyset.LEFT ), 0,
-				keyboard.some( Keyset.DOWN ) - keyboard.some( Keyset.UP ) ).multiplyScalar( 10 ) );
+				keyboard.some( Keyset.DOWN ) - keyboard.some( Keyset.UP ) ).multiplyScalar( 10 )
+			.applyMatrix4( new Matrix4( ).makeRotationAxis( new Vector3( 0, 1, 0 ), this._cameraYaw.rotation.y ) )
+			.multiplyScalar( delta ) );
+	
+		// Application of velocity
+		this._physics.forEach( function ( object ) {
 
-			// Delta factor
-			velocity.multiplyScalar( delta );
-
-			// Player orientation
-			var rotationMatrix = new Matrix4( ).makeRotationAxis( new Vector3( 0, 1, 0 ), this._cameraYaw.rotation.y );
-			velocity.applyMatrix4( rotationMatrix );
-			
 			// Collision detection
-			var collisions = this._computeCollisions( object, velocity );
+			var collisions = this._computeCollisions( object, object.frameVelocity );
+			object.frameVelocity.multiply( collisions );
 			object.velocity.multiply( collisions );
-			velocity.multiply( collisions );
 
 			// Position update
-			object.position.add( velocity );
+			object.position.add( object.frameVelocity );
+
 		}, this );
 
 		var playerPosition = [ Math.floor( this._player.position.x ), Math.floor( this._player.position.y ), Math.floor( this._player.position.z ) ];
@@ -136,6 +155,7 @@ define( [
 	Game.prototype.drawUpdate = function ( timer ) {
 
 		var delta = timer.clock.getDelta( );
+		console.log( delta );
 
 		var maxPitch = Math.PI / 2 * .9;
 		this._cameraYaw.rotation.y -= mouse.movement.x * Math.PI / 5 * delta;
@@ -254,6 +274,39 @@ define( [
 			this._generator.generate( regionKey );
 
 		return this;
+
+	};
+
+	Game.prototype._gotoCommand = function ( stdin, stdout, arguments ) {
+
+		if ( arguments.length < 4 ) {
+			stdout.end( new Error( 'Usage : ' + arguments[ 0 ] +' <x> <y> <z>' ) );
+		} else {
+			var x = Number( arguments[ 1 ] ), y = Number( arguments[ 2 ] ), z = Number( arguments[ 3 ] );
+			this._loadRegionsAt( [ Math.floor( x ), Math.floor( y ), Math.floor( z ) ], 5 );
+			this._player.position.set( x, y, z );
+			stdout.end( );
+		}
+
+	};
+
+	Game.prototype._gravityCommand = function ( stdin, stdout, arguments ) {
+
+		if ( arguments.length > 2 || arguments.length === 2 && [ 'off', 'on' ].indexOf( arguments[ 1 ] ) === - 1 ) {
+			stdout.end( new Error( 'Usage : ' + arguments[ 0 ] + ' [on|off]' ) );
+		} else if ( arguments.length === 1 ) {
+			stdout.end( this._gravity ? 'Gravity is on' : 'Gravity is off' );
+		} else {
+			this._gravity = Boolean( [ 'off', 'on' ].indexOf( arguments[ 1 ] ) );
+
+			if ( ! this._gravity ) {
+				this._physics.forEach( function ( object ) {
+					object.velocity.y = 0;
+				} );
+			}
+
+			stdout.end( );
+		}
 
 	};
 
