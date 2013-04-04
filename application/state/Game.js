@@ -2,6 +2,7 @@ define( [
 
 	'SWAT',
 	'THREE',
+	'THREE.OBJLoader',
 
 	'url!worker/generator',
 	'url!worker/polygonizer',
@@ -12,7 +13,7 @@ define( [
 	'Region',
 	'World'
 
-], function ( SWAT, THREE, generatorWorker, polygonizerWorker, Player, Polygonizer, Region, World ) {
+], function ( SWAT, THREE, THREE, generatorWorker, polygonizerWorker, Player, Polygonizer, Region, World ) {
 	
 	var Multi               = SWAT.thread.Multi;
 	var Pool                = SWAT.thread.Pool;
@@ -30,6 +31,7 @@ define( [
 	var MeshLambertMaterial = THREE.MeshLambertMaterial;
 	var MeshFaceMaterial    = THREE.MeshFaceMaterial;
 	var Mesh                = THREE.Mesh;
+	var OBJLoader           = THREE.OBJLoader;
 	var Object3D            = THREE.Object3D;
 	var PerspectiveCamera   = THREE.PerspectiveCamera;
 	var PointLight          = THREE.PointLight;
@@ -64,27 +66,46 @@ define( [
 		this._scene.fog = new Fog( 0xcce0ff, 500, 1000 );
 		this._scene.add( this._world3D );
 		
+		this._player = new Player( );
+		this._player.acceleration = new Vector3( 0, - 43, 0 );
+		this._player.velocity = new Vector3( 0, 0, 0 );
+		this._player.position.set( 0, 130, 0 );
+		this._scene.add( this._player );
+		this._physics.push( this._player );
+		
 		this._camera = new PerspectiveCamera( );
 		this._cameraPitch = new Object3D( );
-		this._cameraYaw = new Object3D( );
 		this._cameraBase = new Object3D( );
-
-		this._scene.add( this._cameraBase );
-		this._cameraBase.add( this._cameraYaw );
-		this._cameraYaw.add( this._cameraPitch );
+		this._cameraBase.position.set( 0, 4, 0 );
+		this._player.add( this._cameraBase );
+		this._cameraBase.add( this._cameraPitch );
 		this._cameraPitch.add( this._camera );
 
 		this._scene.add( new THREE.AmbientLight( 0x666666 ) );
 		this._light = new PointLight( 0xffffff );
-		this._cameraPitch.add( this._light );
+		this._camera.add( this._light );
 		
-		this._player = new Player( );
-		this._player.acceleration = new Vector3( 0, - 43, 0 );
-		this._player.velocity = new Vector3( 0, 0, 0 );
-		this._player.position.set( 0, 20, 0 );
-		this._scene.add( this._player );
-		this._physics.push( this._player );
-		
+		this._gun = new Object3D( );
+		this._gun.position.set( 1.3, - 1.1, - 3 );
+		this._camera.add( this._gun );
+
+		new OBJLoader( ).load( 'assets/models/blaster.obj', function ( group ) {
+
+			var material = new MeshLambertMaterial( { map : THREE.ImageUtils.loadTexture( 'assets/models/blaster.png' ) } );
+
+			group.rotation.set( - Math.PI / 2, 0, Math.PI / 2 );
+
+			group.traverse( function ( object ) {
+				if ( ! ( object instanceof Mesh ) )
+					return ;
+				object.scale.set( .07, .07, .07 );
+				object.material = material;
+			}.bind( this ) );
+
+			this._gun.add( group );
+
+		}.bind( this ) );
+
 		this._loadRegionsAt( [ 0, 0, 0 ], 10 );
 
 		screen.setClearColor( this._scene.fog.color );
@@ -128,7 +149,7 @@ define( [
 		this._player.frameVelocity.add( new Vector3(
 				keyboard.some( Keyset.RIGHT ) - keyboard.some( Keyset.LEFT ), 0,
 				keyboard.some( Keyset.DOWN ) - keyboard.some( Keyset.UP ) ).multiplyScalar( 10 )
-			.applyMatrix4( new Matrix4( ).makeRotationAxis( new Vector3( 0, 1, 0 ), this._cameraYaw.rotation.y ) )
+			.applyMatrix4( new Matrix4( ).makeRotationAxis( new Vector3( 0, 1, 0 ), this._player.rotation.y ) )
 			.multiplyScalar( delta ) );
 	
 		// Application of velocity
@@ -158,13 +179,10 @@ define( [
 		var delta = timer.clock.getDelta( );
 
 		var maxPitch = Math.PI / 2 * .9;
-		this._cameraYaw.rotation.y -= mouse.movement.x * Math.PI / 5 * delta;
+		this._player.rotation.y -= mouse.movement.x * Math.PI / 5 * delta;
 		this._cameraPitch.rotation.x -= mouse.movement.y * Math.PI / 5 * delta;
 		this._cameraPitch.rotation.x = SWAT.math.clamp( this._cameraPitch.rotation.x, - maxPitch, maxPitch );
 		mouse.movement.set( 0, 0 );
-
-		this._cameraBase.position.copy( this._player.position );
-		this._cameraBase.position.add( new Vector3( 0, 4, 0 ) );
 
 		this.render( );
 		
