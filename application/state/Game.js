@@ -166,7 +166,7 @@ define( [
 		}, this );
 
 		var playerPosition = [ Math.floor( this._player.position.x ), Math.floor( this._player.position.y ), Math.floor( this._player.position.z ) ];
-		//this._loadRegionsAt( playerPosition, 5 );
+		this._loadRegionsAt( playerPosition, 10 );
 
 		$( '#position .x' ).text( SWAT.math.truncate( this._player.position.x, 2 ) );
 		$( '#position .y' ).text( SWAT.math.truncate( this._player.position.y, 2 ) );
@@ -278,7 +278,7 @@ define( [
 		for ( var x = - radius; x <= radius; ++ x ) {
 			var dist = Math.sqrt( Math.pow( radius, 2 ) - Math.pow( x, 2 ) );
 			for ( var z = Math.floor( - dist ), Z = Math.ceil( + dist ); z <= Z; ++ z ) {
-				this._loadRegion( [ mainRegionKey[ 0 ] + x, mainRegionKey[ 1 ], mainRegionKey[ 2 ] + z ] );
+				this._loadRegion( [ mainRegionKey[ 0 ] + x, 0, mainRegionKey[ 2 ] + z ] );
 			}
 		}
 

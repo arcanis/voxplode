@@ -50,9 +50,7 @@ self.importScripts( 'vendors/Noise.js' );
 						
 						var block = AIR;
 
-						if ( width - x < 3 && height - y < 3 && depth - z < 3 ) {
-							block = DIRT;
-						} else if ( y === 0 ) {
+						if ( y === 0 ) {
 							block = DIRT;
 						} else if ( combined > .32 ) {
 							block = DIRT;
@@ -72,7 +70,7 @@ self.importScripts( 'vendors/Noise.js' );
 			
 			self.postMessage( {
 				buffer : data.buffer
-			} );
+			}, [ data.buffer ] );
 
 			break;
 
