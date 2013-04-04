@@ -41,7 +41,8 @@ define( [
 		this._pool = new Pool( new Multi( [ generatorWorker, polygonizerWorker ] ), 10 );
 		
 		this._worldMaterials = [
-			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'images/grass.png' ) } ),
+			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'assets/images/dirt.png' ), wireframe : true } ),
+			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'assets/images/grass.png' ) } ),
 			new MeshLambertMaterial( { color : 0x0000ff, transparent : true, opacity : .5 } )
 		];
 
@@ -155,7 +156,6 @@ define( [
 	Game.prototype.drawUpdate = function ( timer ) {
 
 		var delta = timer.clock.getDelta( );
-		console.log( delta );
 
 		var maxPitch = Math.PI / 2 * .9;
 		this._cameraYaw.rotation.y -= mouse.movement.x * Math.PI / 5 * delta;

@@ -4,12 +4,15 @@ require( {
 
 	paths : {
 
-		'JQUERY' : '../vendor/JQuery',
-		'THREE'  : '../vendor/Three',
-		'SWAT'   : window.location.hostname === 'localhost' ? '../swat/Swat.min' : '../vendor/Swat.min',
+		'JQUERY' : '../vendors/JQuery',
+		'THREE'  : '../vendors/Three',
 
-		'url'      : '../vendor/Require.url',
-		'domReady' : '../vendor/Require.domReady'
+		'SWAT'   : window.location.hostname === 'localhost'
+			? '../vendors/swat/Swat.min'
+			: '../vendors/Swat.min',
+		
+		'url'      : '../vendors/Require.url',
+		'domReady' : '../vendors/Require.domReady'
 
 	},
 

@@ -1,13 +1,14 @@
-self.importScripts( 'vendor/Noise.js' );
+self.importScripts( 'vendors/Noise.js' );
 
 ( function ( ) {
 	
 	var T0 = 0 << 24;
 	var T1 = 1 << 24;
 
-	var AIR = 0xffffffff;
-	var GRASS = T0 | 0;
-	var WATER = T1 | 1;
+	var AIR   = 0xffffffff;
+	var DIRT  = T0 | 0;
+	var GRASS = T0 | 1;
+	var WATER = T1 | 2;
 	
 	var getNoise = function ( xF, yF, zF, x, y, z ) {
 		return ( Math.abs( noise.simplex3( x * xF, y * yF, z * zF ) ) + 0.5 ) * 2 - 1; };
@@ -46,7 +47,24 @@ self.importScripts( 'vendor/Noise.js' );
 
 						var combined = 1 - y / height + Math.abs( roughness * detail + elevation ) / 2;
 						var combined = 1 - y / height + roughness * elevation - detail;
-						data[ z * ( width + 1 ) * ( height + 1 ) + y * ( width + 1 ) + x ] = y === 0 || combined > .3 ? GRASS : y < 50 ? WATER : AIR;
+						
+						var block = AIR;
+
+						if ( width - x < 3 && height - y < 3 && depth - z < 3 ) {
+							block = DIRT;
+						} else if ( y === 0 ) {
+							block = DIRT;
+						} else if ( combined > .32 ) {
+							block = DIRT;
+						} else if ( combined > .30 && y < 50 ) {
+							block = DIRT;
+						} else if ( combined > .30 ) {
+							block = GRASS;
+						} else if ( y < 50 ) {
+							block = WATER;
+						}
+
+						data[ z * ( width + 1 ) * ( height + 1 ) + y * ( width + 1 ) + x ] = block;
 						
 					}
 				}
