@@ -59,7 +59,7 @@ define( [
 		
 		this._bindWorldGenerationChain( );
 		
-		this._gravity = true;
+		this._gravity = false;
 		this._physics = [ ];
 		
 		this._scene = new Scene( );
@@ -69,7 +69,7 @@ define( [
 		this._player = new Player( );
 		this._player.acceleration = new Vector3( 0, - 43, 0 );
 		this._player.velocity = new Vector3( 0, 0, 0 );
-		this._player.position.set( 0, 130, 0 );
+		this._player.position.set( 61, 129, -34 );
 		this._scene.add( this._player );
 		this._physics.push( this._player );
 		
