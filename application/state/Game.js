@@ -45,7 +45,7 @@ define( [
 		this._engineFpsCounter = new FPSCounter( );
 		this._drawFpsCounter = new FPSCounter( );
 
-		this._pool = new Pool( new Multi( [ generatorWorker, polygonizerWorker ] ), 10 );
+		this._pool = new Pool( new Multi( [ generatorWorker, polygonizerWorker ] ), 8 );
 		
 		this._worldMaterials = [
 			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'assets/images/dirt.png' ) } ),
@@ -55,13 +55,14 @@ define( [
 
 		this._world = new World( );
 		this._world3D = new Object3D( );
+		this._regionsMeshes = [ ];
 		
 		this._generator = generator;
 		this._generator.setPool( this._pool );
 
 		this._polygonizer = new Polygonizer( );
 		this._polygonizer.setPool( this._pool );
-		
+
 		this._bindWorldGenerationChain( );
 		
 		this._gravity = false;
@@ -74,9 +75,10 @@ define( [
 		this._player = new Player( );
 		this._player.acceleration = new Vector3( 0, - 43, 0 );
 		this._player.velocity = new Vector3( 0, 0, 0 );
-		this._player.position.set( 61, 129, -34 );
+		this._player.position.set( 61, 629, -34 );
 		this._scene.add( this._player );
 		this._physics.push( this._player );
+		this._currentPlayerRegion = null;
 		
 		this._camera = new PerspectiveCamera( );
 		this._cameraPitch = new Object3D( );
@@ -110,8 +112,6 @@ define( [
 			this._gun.add( group );
 
 		}.bind( this ) );
-
-		this._loadRegionsAt( [ 0, 0, 0 ], 4 );
 
 		screen.setClearColor( this._scene.fog.color );
 		screen.domElement.addEventListener( 'click', function ( ) {
@@ -172,12 +172,32 @@ define( [
 
 		}, this );
 
-		var playerPosition = [ Math.floor( this._player.position.x ), Math.floor( this._player.position.y ), Math.floor( this._player.position.z ) ];
-		this._loadRegionsAt( playerPosition, 10 );
-
 		$( '#position .x' ).text( SWAT.math.truncate( this._player.position.x, 2 ) );
 		$( '#position .y' ).text( SWAT.math.truncate( this._player.position.y, 2 ) );
 		$( '#position .z' ).text( SWAT.math.truncate( this._player.position.z, 2 ) );
+
+		this._playerChunkUpdate( );
+
+	};
+
+	Game.prototype._playerChunkUpdate = function ( ) {
+
+		var currentPlayerVoxel = [ Math.floor( this._player.position.x ), Math.floor( this._player.position.y ), Math.floor( this._player.position.z ) ];
+		var currentPlayerRegion = World.getMainRegionKeyFromWorldVoxel( currentPlayerVoxel );
+
+		if ( this._currentPlayerRegion !== null &&
+			 this._currentPlayerRegion[ 0 ] === currentPlayerRegion[ 0 ] &&
+			 this._currentPlayerRegion[ 1 ] === currentPlayerRegion[ 1 ] &&
+			 this._currentPlayerRegion[ 2 ] === currentPlayerRegion[ 2 ] )
+			return ;
+		
+		var previousPlayerRegion = this._currentPlayerRegion;
+		this._currentPlayerRegion = currentPlayerRegion;
+
+		if ( previousPlayerRegion )
+			this._unloadRegionsAt( previousPlayerRegion, 6 );
+
+		this._loadRegionsAt( currentPlayerRegion, 6 );
 
 	};
 
@@ -253,19 +273,29 @@ define( [
 	
 	Game.prototype._bindWorldGenerationChain = function ( ) {
 
-		var regions = Object.create( null );
-
 		this._polygonizer.addEventListener( 'polygonization', function ( e ) {
 
-			if ( regions[ e.regionKey ] )
-				this._world3D.remove( regions[ e.regionKey ] );
+			if ( this._regionsMeshes[ e.regionKey ] && typeof this._regionsMeshes[ e.regionKey ] !== 'boolean' )
+				this._world3D.remove( this._regionsMeshes[ e.regionKey ] );
 
 			if ( e.geometries ) {
-				this._world3D.add( regions[ e.regionKey ] = new Object3D( ) );
-				regions[ e.regionKey ].position.set( e.regionKey[ 0 ] * Region.WIDTH, e.regionKey[ 1 ] * Region.HEIGHT, e.regionKey[ 2 ] * Region.DEPTH );
+
+				var visibility = typeof this._regionsMeshes[ e.regionKey ] === 'object'
+					? this._regionsMeshes[ e.regionKey ].visible
+					: this._regionsMeshes[ e.regionKey ];
+				console.log( typeof this._regionsMeshes[ e.regionKey ], visibility );
+
+				this._world3D.add( this._regionsMeshes[ e.regionKey ] = new Object3D( ) );
+				this._regionsMeshes[ e.regionKey ].position.set( e.regionKey[ 0 ] * Region.WIDTH, e.regionKey[ 1 ] * Region.HEIGHT, e.regionKey[ 2 ] * Region.DEPTH );
+
 				Object.keys( e.geometries ).forEach( function ( materialIndex ) {
-					regions[ e.regionKey ].add( new Mesh( e.geometries[ materialIndex ], this._worldMaterials[ materialIndex ] ) );
+					this._regionsMeshes[ e.regionKey ].add( new Mesh( e.geometries[ materialIndex ], this._worldMaterials[ materialIndex ] ) );
 				}, this );
+
+				this._regionsMeshes[ e.regionKey ].traverse( function ( object ) {
+					object.visible = visibility;
+				} );
+
 			}
 
 		}.bind( this ) );
@@ -280,14 +310,12 @@ define( [
 
 	};
 
-	Game.prototype._loadRegionsAt = function ( worldVoxel, radius ) {
-
-		var mainRegionKey = World.getMainRegionKeyFromWorldVoxel( worldVoxel );
+	Game.prototype._loadRegionsAt = function ( regionKey, radius ) {
 
 		for ( var x = - radius; x <= radius; ++ x ) {
 			var dist = Math.sqrt( Math.pow( radius, 2 ) - Math.pow( x, 2 ) );
 			for ( var z = Math.floor( - dist ), Z = Math.ceil( + dist ); z <= Z; ++ z ) {
-				this._loadRegion( [ mainRegionKey[ 0 ] + x, 0, mainRegionKey[ 2 ] + z ] );
+				this._loadRegion( [ regionKey[ 0 ] + x, 0, regionKey[ 2 ] + z ] );
 			}
 		}
 
@@ -297,34 +325,70 @@ define( [
 
 	Game.prototype._loadRegion = function ( regionKey ) {
 
-		if ( ! this._world.getRegion( regionKey ) )
-			this._generator.generate( regionKey );
+		if ( typeof this._regionsMeshes[ regionKey ] === 'object' ) {
 
-		return this;
+			this._regionsMeshes[ regionKey ].traverse( function ( object ) {
+				object.visible = true;
+			} );
+
+		} else {
+
+			this._regionsMeshes[ regionKey ] = true;
+
+			if ( ! this._world.getRegion( regionKey ) )
+				this._generator.generate( regionKey );
+
+		}
 
 	};
 
-	Game.prototype._gotoCommand = function ( stdin, stdout, arguments ) {
+	Game.prototype._unloadRegionsAt = function ( regionKey, radius ) {
 
-		if ( arguments.length < 4 ) {
-			stdout.end( new Error( 'Usage : ' + arguments[ 0 ] +' <x> <y> <z>' ) );
+		for ( var x = - radius; x <= radius; ++ x ) {
+			var dist = Math.sqrt( Math.pow( radius, 2 ) - Math.pow( x, 2 ) );
+			for ( var z = Math.floor( - dist ), Z = Math.ceil( + dist ); z <= Z; ++ z ) {
+				this._unloadRegion( [ regionKey[ 0 ] + x, 0, regionKey[ 2 ] + z ] );
+			}
+		}
+
+	};
+
+	Game.prototype._unloadRegion = function ( regionKey ) {
+
+		if ( typeof this._regionsMeshes[ regionKey ] === 'object' ) {
+
+			this._regionsMeshes[ regionKey ].traverse( function ( object ) {
+				object.visible = false;
+			} );
+
 		} else {
-			var x = Number( arguments[ 1 ] ), y = Number( arguments[ 2 ] ), z = Number( arguments[ 3 ] );
-			this._loadRegionsAt( [ Math.floor( x ), Math.floor( y ), Math.floor( z ) ], 3 );
+
+			this._regionsMeshes[ regionKey ] = false;
+
+		}
+
+	};
+
+	Game.prototype._gotoCommand = function ( stdin, stdout, argv ) {
+
+		if ( argv.length < 4 ) {
+			stdout.end( new Error( 'Usage : ' + argv[ 0 ] +' <x> <y> <z>' ) );
+		} else {
+			var x = Number( argv[ 1 ] ), y = Number( argv[ 2 ] ), z = Number( argv[ 3 ] );
 			this._player.position.set( x, y, z );
 			stdout.end( );
 		}
 
 	};
 
-	Game.prototype._gravityCommand = function ( stdin, stdout, arguments ) {
+	Game.prototype._gravityCommand = function ( stdin, stdout, argv ) {
 
-		if ( arguments.length > 2 || arguments.length === 2 && [ 'off', 'on' ].indexOf( arguments[ 1 ] ) === - 1 ) {
-			stdout.end( new Error( 'Usage : ' + arguments[ 0 ] + ' [on|off]' ) );
-		} else if ( arguments.length === 1 ) {
+		if ( argv.length > 2 || argv.length === 2 && [ 'off', 'on' ].indexOf( argv[ 1 ] ) === - 1 ) {
+			stdout.end( new Error( 'Usage : ' + argv[ 0 ] + ' [on|off]' ) );
+		} else if ( argv.length === 1 ) {
 			stdout.end( this._gravity ? 'Gravity is on' : 'Gravity is off' );
 		} else {
-			this._gravity = Boolean( [ 'off', 'on' ].indexOf( arguments[ 1 ] ) );
+			this._gravity = Boolean( [ 'off', 'on' ].indexOf( argv[ 1 ] ) );
 
 			if ( ! this._gravity ) {
 				this._physics.forEach( function ( object ) {
