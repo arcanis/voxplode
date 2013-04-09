@@ -208,8 +208,8 @@ define( [
 		$( '#draw-fps .value' ).text( SWAT.math.truncate( this._drawFpsCounter.step( delta ).fps, 2 ) );
 
 		var maxPitch = Math.PI / 2 * .9;
-		this._player.rotation.y -= mouse.movement.x * Math.PI / 5 * delta;
-		this._cameraPitch.rotation.x -= mouse.movement.y * Math.PI / 5 * delta;
+		this._player.rotation.y -= mouse.movement.x * Math.PI / 6 * delta;
+		this._cameraPitch.rotation.x -= mouse.movement.y * Math.PI / 6 * delta;
 		this._cameraPitch.rotation.x = SWAT.math.clamp( this._cameraPitch.rotation.x, - maxPitch, maxPitch );
 		mouse.movement.set( 0, 0 );
 
