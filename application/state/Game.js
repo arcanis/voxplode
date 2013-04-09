@@ -75,7 +75,7 @@ define( [
 		this._player = new Player( );
 		this._player.acceleration = new Vector3( 0, - 43, 0 );
 		this._player.velocity = new Vector3( 0, 0, 0 );
-		this._player.position.set( 61, 629, -34 );
+		this._player.position.set( 61, 129, -34 );
 		this._scene.add( this._player );
 		this._physics.push( this._player );
 		this._currentPlayerRegion = null;
@@ -95,6 +95,8 @@ define( [
 		this._gun = new Object3D( );
 		this._gun.position.set( 1.3, - 1.1, - 3 );
 		this._camera.add( this._gun );
+
+		this._speed = 10;
 
 		new OBJLoader( ).load( 'assets/models/blaster.obj', function ( group ) {
 
@@ -118,6 +120,7 @@ define( [
 			screen.domElement.requestPointerLock( );
 		} );
 
+		shell.registerCommand( 'speed', this._speedCommand, this );
 		shell.registerCommand( 'goto', this._gotoCommand, this );
 		shell.registerCommand( 'gravity', this._gravityCommand, this );
 
@@ -155,7 +158,7 @@ define( [
 		// Keyboard controls
 		this._player.frameVelocity.add( new Vector3(
 				keyboard.some( Keyset.RIGHT ) - keyboard.some( Keyset.LEFT ), 0,
-				keyboard.some( Keyset.DOWN ) - keyboard.some( Keyset.UP ) ).multiplyScalar( 10 )
+				keyboard.some( Keyset.DOWN ) - keyboard.some( Keyset.UP ) ).multiplyScalar( this._speed )
 			.applyMatrix4( new Matrix4( ).makeRotationAxis( new Vector3( 0, 1, 0 ), this._player.rotation.y ) )
 			.multiplyScalar( delta ) );
 	
@@ -283,7 +286,6 @@ define( [
 				var visibility = typeof this._regionsMeshes[ e.regionKey ] === 'object'
 					? this._regionsMeshes[ e.regionKey ].visible
 					: this._regionsMeshes[ e.regionKey ];
-				console.log( typeof this._regionsMeshes[ e.regionKey ], visibility );
 
 				this._world3D.add( this._regionsMeshes[ e.regionKey ] = new Object3D( ) );
 				this._regionsMeshes[ e.regionKey ].position.set( e.regionKey[ 0 ] * Region.WIDTH, e.regionKey[ 1 ] * Region.HEIGHT, e.regionKey[ 2 ] * Region.DEPTH );
@@ -396,6 +398,19 @@ define( [
 				} );
 			}
 
+			stdout.end( );
+		}
+
+	};
+
+	Game.prototype._speedCommand = function ( stdin, stdout, argv ) {
+
+		if ( argv.length > 2 ) {
+			stdout.end( new Error( 'Usage : ' + argv[ 0 ] + ' [amount]' ) );
+		} else if ( argv.length === 1 ) {
+			stdout.end( this._speed );
+		} else {
+			this._speed = Math.max( 0, Number( argv[ 1 ] ) );
 			stdout.end( );
 		}
 

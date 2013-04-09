@@ -18,6 +18,10 @@ For now, the following commands are available :
 
   Without parameter, returns the current gravity value. With a parameter, switches gravity state.
 
+- `speed [amount]`
+
+  Without parameter, returns the current player speed. With a parameter, changes this speed.
+
 ## Fly mode
 
 When gravity is on, you can move up and done by using `Ctrl` and `Shift` keys.
