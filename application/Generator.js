@@ -24,6 +24,7 @@ define( [
 		
 		if ( this._pool ) {
 			this._pool.removeEventListener( 'push', this._poolPush, this );
+			this._pool.removeEventListener( 'shift', this._poolShift, this );
 			this._pool.removeEventListener( 'complete', this._poolComplete, this );
 		}
 		
@@ -31,6 +32,7 @@ define( [
 		
 		if ( this._pool ) {
 			this._pool.addEventListener( 'push', this._poolPush, this );
+			this._pool.addEventListener( 'shift', this._poolShift, this );
 			this._pool.addEventListener( 'complete', this._poolComplete, this );
 
 			this._pool.broadcast( {
@@ -50,8 +52,17 @@ define( [
 		
 		if ( e.task.cmd !== 'generate' )
 			return ;
-		
+
 		this._pending[ e.task.regionKey ] = true;
+
+	};
+
+	Generator.prototype._poolShift = function ( e ) {
+
+		if ( e.task.cmd !== 'generate' )
+			return ;
+
+		console.time( "Generating " + e.task.regionKey );
 
 	};
 
@@ -59,6 +70,8 @@ define( [
 
 		if ( e.task.cmd !== 'generate' )
 			return ;
+
+		console.timeEnd( "Generating " + e.task.regionKey );
 
 		delete this._pending[ e.task.regionKey ];
 

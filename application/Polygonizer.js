@@ -82,6 +82,8 @@ define( [
 
 		if ( e.task.cmd !== 'polygonize' )
 			return ;
+
+		console.time( "Polygonizing " + e.task.regionKey );
 		
 		this._tasks[ e.task.regionKey ].pending -= 1;
 		this._tasks[ e.task.regionKey ].processing += 1;
@@ -92,6 +94,8 @@ define( [
 
 		if ( e.task.cmd !== 'polygonize' )
 			return ;
+
+		console.timeEnd( "Polygonizing " + e.task.regionKey );
 
 		this._tasks[ e.task.regionKey ].processing -= 1;
 		var version = this._tasks[ e.task.regionKey ].version;
