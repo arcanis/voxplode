@@ -12,11 +12,11 @@ define( function ( ) {
 
 	};
 
-	Region.WIDTH = 16;
+	Region.WIDTH = 32;
 
 	Region.HEIGHT = 128;
 
-	Region.DEPTH = 16;
+	Region.DEPTH = 32;
 
 	Region.getBufferSize = function ( ) {
 

@@ -1,5 +1,6 @@
 define( [
 
+	'JQUERY',
 	'SWAT',
 	'THREE',
 	'THREE.OBJLoader',
@@ -13,8 +14,9 @@ define( [
 	'Region',
 	'World'
 
-], function ( SWAT, THREE, THREE, generatorWorker, polygonizerWorker, Player, Polygonizer, Region, World ) {
-	
+], function ( $, SWAT, THREE, THREE, generatorWorker, polygonizerWorker, Player, Polygonizer, Region, World ) {
+
+	var FPSCounter          = SWAT.time.FPSCounter;
 	var Multi               = SWAT.thread.Multi;
 	var Pool                = SWAT.thread.Pool;
 	var Key                 = SWAT.device.Key;
@@ -40,10 +42,13 @@ define( [
 
 	var Game = function ( generator ) {
 
+		this._engineFpsCounter = new FPSCounter( );
+		this._drawFpsCounter = new FPSCounter( );
+
 		this._pool = new Pool( new Multi( [ generatorWorker, polygonizerWorker ] ), 10 );
 		
 		this._worldMaterials = [
-			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'assets/images/dirt.png' ), wireframe : true } ),
+			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'assets/images/dirt.png' ) } ),
 			new MeshLambertMaterial( { map : ImageUtils.loadTexture( 'assets/images/grass.png' ) } ),
 			new MeshLambertMaterial( { color : 0x0000ff, transparent : true, opacity : .5 } )
 		];
@@ -106,7 +111,7 @@ define( [
 
 		}.bind( this ) );
 
-		this._loadRegionsAt( [ 0, 0, 0 ], 10 );
+		this._loadRegionsAt( [ 0, 0, 0 ], 4 );
 
 		screen.setClearColor( this._scene.fog.color );
 		screen.domElement.addEventListener( 'click', function ( ) {
@@ -121,6 +126,8 @@ define( [
 	Game.prototype.engineUpdate = function ( timer ) {
 
 		var delta = timer.clock.getDelta( );
+
+		$( '#engine-fps .value' ).text( SWAT.math.truncate( this._engineFpsCounter.step( delta ).fps, 2 ) );
 
 		// JUMP, JUMP, JUMP ALL AROUND
 		if ( this._gravity ) {
@@ -177,6 +184,8 @@ define( [
 	Game.prototype.drawUpdate = function ( timer ) {
 
 		var delta = timer.clock.getDelta( );
+
+		$( '#draw-fps .value' ).text( SWAT.math.truncate( this._drawFpsCounter.step( delta ).fps, 2 ) );
 
 		var maxPitch = Math.PI / 2 * .9;
 		this._player.rotation.y -= mouse.movement.x * Math.PI / 5 * delta;
@@ -301,7 +310,7 @@ define( [
 			stdout.end( new Error( 'Usage : ' + arguments[ 0 ] +' <x> <y> <z>' ) );
 		} else {
 			var x = Number( arguments[ 1 ] ), y = Number( arguments[ 2 ] ), z = Number( arguments[ 3 ] );
-			this._loadRegionsAt( [ Math.floor( x ), Math.floor( y ), Math.floor( z ) ], 5 );
+			this._loadRegionsAt( [ Math.floor( x ), Math.floor( y ), Math.floor( z ) ], 3 );
 			this._player.position.set( x, y, z );
 			stdout.end( );
 		}
