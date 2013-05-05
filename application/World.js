@@ -1,46 +1,46 @@
 define( [
 
-	'SWAT',
+    'SWAT',
 
-	'Region'
+    'Region'
 
 ], function ( SWAT, Region ) {
 
-	var Event = SWAT.Event;
+    var Event = SWAT.Event;
 
-	var World = function ( ) {
-		
-		Event.initialize( this );
+    var World = function ( ) {
+        
+        Event.initialize( this );
 
-		this._regions = Object.create( null );
+        this._regions = Object.create( null );
 
-	};
+    };
 
-	World.getMainRegionKeyFromWorldVoxel = function ( worldVoxel ) { return [
-		Math.floor( worldVoxel[ 0 ] / Region.WIDTH ),
-		Math.floor( worldVoxel[ 1 ] / Region.HEIGHT ),
-		Math.floor( worldVoxel[ 2 ] / Region.DEPTH )
-	]; };
+    World.getMainRegionKeyFromWorldVoxel = function ( worldVoxel ) { return [
+        Math.floor( worldVoxel[ 0 ] / Region.WIDTH ),
+        Math.floor( worldVoxel[ 1 ] / Region.HEIGHT ),
+        Math.floor( worldVoxel[ 2 ] / Region.DEPTH )
+    ]; };
 
-	World.getLocalVoxelFromWorldVoxel = function ( worldVoxel, regionKey ) { return [
-		worldVoxel[ 0 ] - regionKey[ 0 ] * Region.WIDTH,
-		worldVoxel[ 1 ] - regionKey[ 1 ] * Region.HEIGHT,
-		worldVoxel[ 2 ] - regionKey[ 2 ] * Region.DEPTH
-	]; };
+    World.getLocalVoxelFromWorldVoxel = function ( worldVoxel, regionKey ) { return [
+        worldVoxel[ 0 ] - regionKey[ 0 ] * Region.WIDTH,
+        worldVoxel[ 1 ] - regionKey[ 1 ] * Region.HEIGHT,
+        worldVoxel[ 2 ] - regionKey[ 2 ] * Region.DEPTH
+    ]; };
 
-	Event.install( World.prototype, [ 'new', 'update', 'set' ] );
+    Event.install( World.prototype, [ 'new', 'update', 'set' ] );
 
-	World.prototype.getRegion = function ( regionKey ) {
+    World.prototype.getRegion = function ( regionKey ) {
 
-		return this._regions[ regionKey ];
+        return this._regions[ regionKey ];
 
-	};
+    };
 
-	World.prototype.setRegion = function ( regionKey, region ) {
+    World.prototype.setRegion = function ( regionKey, region ) {
 
         this._regions[ regionKey ] = region;
 
-		var copyBorders = function ( target, source, cx, cy, cz ) {
+        var copyBorders = function ( target, source, cx, cy, cz ) {
 
             for ( var x = 0, X = cx ? 1 : Region.WIDTH; x < X; ++ x ) {
                 for ( var y = 0, Y = cy ? 1 : Region.HEIGHT; y < Y; ++ y ) {
@@ -64,35 +64,35 @@ define( [
                 }
             }
 
-		};
+        };
 
         var exportBorders = function ( cx, cy, cz ) {
 
-			var targetRegionKey = [ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ];
+            var targetRegionKey = [ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ];
             var targetRegion = this._regions[ targetRegionKey ];
 
             if ( ! targetRegion )
-				return ;
+                return ;
 
-			copyBorders( targetRegion, region, cx, cy, cz );
+            copyBorders( targetRegion, region, cx, cy, cz );
 
-			this.dispatchEvent( 'update', {
-				regionKey : targetRegionKey,
-				region : targetRegion
-			} );
+            this.dispatchEvent( 'update', {
+                regionKey : targetRegionKey,
+                region : targetRegion
+            } );
 
         }.bind( this );
 
 
         var importBorders = function ( cx, cy, cz ) {
 
-			var sourceRegionKey = [ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ];
+            var sourceRegionKey = [ regionKey[ 0 ] + cx, regionKey[ 1 ] + cy, regionKey[ 2 ] + cz ];
             var sourceRegion = this._regions[ sourceRegionKey ];
 
             if ( ! sourceRegion )
-				return ;
+                return ;
 
-			copyBorders( region, sourceRegion, cx, cy, cz );
+            copyBorders( region, sourceRegion, cx, cy, cz );
 
         }.bind( this );
 
@@ -112,62 +112,62 @@ define( [
         importBorders( + 1, + 1, + 1 );
         importBorders( + 0, + 1, + 1 );
 
-		this.dispatchEvent( 'new', {
-			regionKey : regionKey,
-			region : region
-		} );
+        this.dispatchEvent( 'new', {
+            regionKey : regionKey,
+            region : region
+        } );
 
-	};
+    };
 
-	World.prototype.getVoxel = function ( worldVoxel ) {
+    World.prototype.getVoxel = function ( worldVoxel ) {
 
-		var regionKey = World.getMainRegionKeyFromWorldVoxel( worldVoxel );
-		var regionVoxel = World.getLocalVoxelFromWorldVoxel( worldVoxel, regionKey );
+        var regionKey = World.getMainRegionKeyFromWorldVoxel( worldVoxel );
+        var regionVoxel = World.getLocalVoxelFromWorldVoxel( worldVoxel, regionKey );
 
-		var region = this._regions[ regionKey ];
+        var region = this._regions[ regionKey ];
 
-		return region ? region.get( regionVoxel ) : undefined;
+        return region ? region.get( regionVoxel ) : undefined;
 
-	};
+    };
 
-	World.prototype.setVoxel = function ( worldVoxel, value ) {
+    World.prototype.setVoxel = function ( worldVoxel, value ) {
 
-		var setLocalVoxel = function ( regionKey, localVoxel ) {
+        var setLocalVoxel = function ( regionKey, localVoxel ) {
 
-			var region = this._regions[ regionKey ];
-			
-			if ( ! region )
-				return ;
-			
-			region.set( localVoxel, value );
+            var region = this._regions[ regionKey ];
+            
+            if ( ! region )
+                return ;
+            
+            region.set( localVoxel, value );
 
-			this.dispatchEvent( 'update', {
-				regionKey : regionKey,
-				region : region
-			} );
+            this.dispatchEvent( 'update', {
+                regionKey : regionKey,
+                region : region
+            } );
 
-		}.bind( this );
+        }.bind( this );
 
         var regionKey = World.getMainRegionKeyFromWorldVoxel( worldVoxel );
         var localVoxel = World.getLocalVoxelFromWorldVoxel( worldVoxel, regionKey );
 
-		setLocalVoxel( regionKey, localVoxel );
+        setLocalVoxel( regionKey, localVoxel );
 
         var checkNeighbor = function ( cx, cy, cz ) {
 
             if ( ( cx && localVoxel[ 0 ] !== 0 ) || ( cy && localVoxel[ 1 ] !== 0 ) || ( cz && localVoxel[ 2 ] !== 0 ) )
-				return ;
+                return ;
 
-			setLocalVoxel( [
-				regionKey[ 0 ] + cx,
-				regionKey[ 1 ] + cy,
-				regionKey[ 2 ] + cz
-			], [
-				! cx ? localVoxel[ 0 ] : Region.WIDTH,
-				! cy ? localVoxel[ 1 ] : Region.HEIGHT,
-				! cz ? localVoxel[ 2 ] : Region.DEPTH
-			] );
-			
+            setLocalVoxel( [
+                regionKey[ 0 ] + cx,
+                regionKey[ 1 ] + cy,
+                regionKey[ 2 ] + cz
+            ], [
+                ! cx ? localVoxel[ 0 ] : Region.WIDTH,
+                ! cy ? localVoxel[ 1 ] : Region.HEIGHT,
+                ! cz ? localVoxel[ 2 ] : Region.DEPTH
+            ] );
+            
         };
 
         checkNeighbor( - 1, - 0, - 0 );
@@ -178,13 +178,13 @@ define( [
         checkNeighbor( - 1, - 0, - 1 );
         checkNeighbor( - 1, - 1, - 1 );
 
-		this.dispatchEvent( 'set', {
-			worldVoxel : worldVoxel,
-			value : value
-		} );
+        this.dispatchEvent( 'set', {
+            worldVoxel : worldVoxel,
+            value : value
+        } );
 
-	};
+    };
 
-	return World;
+    return World;
 
 } );

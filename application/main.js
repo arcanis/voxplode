@@ -1,17 +1,17 @@
 define( [
 
-	'JQUERY',
-	'SWAT',
+    'JQUERY',
+    'SWAT',
 
-	'state/Game',
-	'Generator'
+    'state/Game',
+    'Generator'
 
 ], function ( $, SWAT, Game, Generator ) {
-	
-	$( '#app' ).show( );
+    
+    $( '#app' ).show( );
 
-	var generator = new Generator( 0 );
-	var state = new Game( generator );
-	SWAT.ticker.add( state ).start( );
+    var generator = new Generator( 0 );
+    var state = new Game( generator );
+    SWAT.ticker.add( state ).start( );
 
 } );
